@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenHikeStats — GPX Hike Analyzer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --bg:#0f1419; --panel:#1a2129; --panel2:#222c36; --line:#2c3947;
+    --text:#e6edf3; --muted:#90a0b0; --accent:#4ca6ff; --accent2:#ffb454;
+    --green:#5cd6a0; --red:#ff7b72; --shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  a{color:var(--accent)}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+  header h1{font-size:18px;margin:0;letter-spacing:.5px}
+  header h1 .alt{color:var(--accent)}
+  .grow{flex:1}
+  .btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    border-radius:7px;padding:7px 12px;cursor:pointer;font-size:13px}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#06243f;border-color:var(--accent);font-weight:600}
+  .toggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .toggle button{background:var(--panel2);border:0;color:var(--muted);padding:7px 12px;cursor:pointer}
+  .toggle button.on{background:var(--accent);color:#06243f;font-weight:600}
+  .layout{display:flex;align-items:flex-start;gap:0}
+  aside{width:280px;flex:0 0 auto;background:var(--panel);border-right:1px solid var(--line);
+    padding:14px 14px 80px;height:calc(100vh - 56px);overflow:auto;position:sticky;top:0;
+    transition:width .2s ease,padding .2s ease}
+  aside.collapsed{width:0;padding:0;overflow:hidden;border-right:none}
+  #sideToggle{flex:0 0 22px;background:var(--panel);border-right:1px solid var(--line);
+    height:calc(100vh - 56px);position:sticky;top:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;cursor:pointer;gap:8px;user-select:none}
+  #sideToggle:hover{background:var(--panel2)}
+  #sideToggle .st-arrow{font-size:16px;color:var(--muted);line-height:1}
+  #sideToggle .st-label{writing-mode:vertical-rl;transform:rotate(180deg);
+    font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+  aside h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);
+    margin:18px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  aside h2:first-child{margin-top:0}
+  .field{margin:10px 0}
+  .field label{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
+  .field .hint{color:#6b7a8a;font-size:11px;margin-top:3px}
+  .field input,.field select{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--text);border-radius:6px;padding:7px 8px;font-size:13px}
+  .field .row{display:flex;gap:8px;align-items:center}
+  .field .row input{flex:1}
+  .field .unit{color:var(--muted);font-size:12px;min-width:28px}
+  main{flex:1;padding:16px 16px 80px;min-width:0}
+  .drop{border:2px dashed var(--line);border-radius:12px;padding:48px;text-align:center;
+    color:var(--muted);background:var(--panel)}
+  .drop.hover{border-color:var(--accent);color:var(--text);background:var(--panel2)}
+  .drop strong{color:var(--text)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:7px;margin-bottom:8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+  .card .k{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .card .v{font-size:19px;font-weight:650;margin-top:1px}
+  .card .v small{font-size:11px;color:var(--muted);font-weight:400}
+  .card.hl{border-color:var(--accent)}
+  .card.hl .v{color:var(--accent)}
+  .card.wide{grid-column:span 2}
+  .card.wide .v{white-space:nowrap}
+  .readout{display:flex;flex-wrap:wrap;gap:6px 18px;background:var(--panel2);
+    border-top:1px solid var(--line);padding:10px 18px;min-height:42px;align-items:center;
+    position:fixed;left:0;right:0;bottom:0;z-index:600;margin:0;box-shadow:0 -2px 10px rgba(0,0,0,.35)}
+  .readout .ri{font-size:13px}
+  .readout .ri b{color:var(--accent);font-variant-numeric:tabular-nums}
+  .readout .placeholder{color:var(--muted)}
+  .chartbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:8px 10px 4px;margin-bottom:14px}
+  .chartbox h3{margin:2px 4px 4px;font-size:13px;color:var(--muted);font-weight:600}
+  .chartwrap{position:relative;height:200px}
+  .chartwrap.short{height:160px}
+  #map{height:340px;border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;margin-bottom:0}
+  .map-resize-handle{height:8px;background:var(--panel2);border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;cursor:ns-resize;display:flex;align-items:center;justify-content:center;margin-bottom:14px;user-select:none}
+  .map-resize-handle:hover{background:var(--line)}
+  .map-resize-handle::after{content:'';display:block;width:36px;height:3px;border-radius:2px;background:var(--muted);opacity:.45}
+  .maptools{display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-bottom:10px}
+  .maptools .toggle button{padding:5px 11px;font-size:12px}
+  .colorbar{display:flex;align-items:center;gap:10px}
+  .colorbar .cap{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .colorbar .sws{display:flex}
+  .colorbar .sw{display:flex;flex-direction:column;align-items:center;width:54px}
+  .colorbar .sw i{display:block;width:100%;height:13px}
+  .colorbar .sw:first-child i{border-radius:3px 0 0 3px}
+  .colorbar .sw:last-child i{border-radius:0 3px 3px 0}
+  .colorbar .sw span{font-size:10px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  .tablebox{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;margin-bottom:14px}
+  th,td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;background:var(--panel2)}
+  tr:last-child td{border-bottom:0}
+  .sectiontitle{font-size:13px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.8px;margin:6px 2px 8px}
+  .hidden{display:none!important}
+  .warn{background:#3a2a14;border:1px solid #5a4420;color:var(--accent2);
+    padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px}
+  .err{background:#3a1818;border:1px solid #5a2424;color:var(--red);
+    padding:10px 14px;border-radius:8px;margin-bottom:12px}
+  .footer{color:#6b7a8a;font-size:12px;text-align:center;padding:18px}
+  .muted{color:var(--muted)}
+  /* multi-file browser modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:2000;
+    display:flex;align-items:center;justify-content:center;padding:30px}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);width:min(1040px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal .mhead{display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .modal .mhead strong{font-size:15px;letter-spacing:.3px}
+  .mclose{background:none;border:0;color:var(--muted);font-size:24px;line-height:1;
+    cursor:pointer;padding:0 4px;border-radius:6px}
+  .mclose:hover{color:var(--text)}
+  .modal .mtools{display:flex;align-items:center;gap:14px;padding:14px 18px}
+  .modal .mfoot{padding:10px 18px;border-top:1px solid var(--line);font-size:12px}
+  .tablewrap{overflow:auto;flex:1;margin:0 18px;border:1px solid var(--line);border-radius:8px}
+  .gtable{border-collapse:collapse;width:100%;font-size:13px}
+  .gtable th,.gtable td{padding:8px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+  .gtable td.num,.gtable th.num{text-align:right;font-variant-numeric:tabular-nums;padding-left:8px;padding-right:8px}
+  .gtable thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;
+    color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;z-index:1;
+    white-space:normal;line-height:1.3}
+  .gtable thead th:hover{color:var(--text)}
+  .gtable thead th .arr{font-size:10px;color:var(--accent)}
+  .gtable tbody tr{cursor:pointer}
+  .gtable tbody tr:hover{background:var(--panel2)}
+  .gtable tbody tr:last-child td{border-bottom:0}
+  .gtable td.cerr{color:var(--red)}
+  .gtable td.spark{padding:6px 10px}
+  .gtable canvas.spark-canvas{display:block;width:180px;height:56px}
+  .gtable .spark-empty{color:#6b7a8a;font-size:11px;width:180px;display:block;white-space:normal}
+  .gtable tfoot td{position:sticky;bottom:0;background:var(--panel2);border-top:1px solid var(--line);
+    font-weight:600;color:var(--text)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Open<span class="alt">Hike</span>Stats</h1>
+  <input type="file" id="file" accept=".gpx,application/gpx+xml" class="hidden">
+  <input type="file" id="dirInput" webkitdirectory directory multiple class="hidden">
+  <button class="btn" id="loadBtn">Load GPX…</button>
+  <button class="btn" id="browseBtn">Browse multiple GPX…</button>
+  <span id="fileName" class="grow" style="color:var(--muted)">No file loaded</span>
+  <div class="toggle" id="unitToggle">
+    <button data-u="imperial" class="on">Imperial</button>
+    <button data-u="metric">Metric</button>
+  </div>
+  <button class="btn" id="exportBtn" disabled>Export CSV</button>
+</header>
+
+<div class="layout">
+  <aside id="sidebar" class="collapsed">
+    <h2>GPS data quality</h2>
+    <div class="field">
+      <label>GPS outlier sensitivity</label>
+      <div class="row"><input type="number" id="p_gpsOutlierK" min="0" step="0.5">
+        <span class="unit">×</span></div>
+      <div class="hint">Removes GPS spikes. Points anomalously far from both neighbors are discarded. Lower = more aggressive; 0 = off.</div>
+    </div>
+
+    <h2>Elevation gain calculation</h2>
+    <div class="field">
+      <label>Threshold</label>
+      <div class="row"><input type="number" id="p_eleThresh" min="0" step="1">
+        <span class="unit" id="u_ele">ft</span></div>
+      <div class="hint">Hysteresis deadband for elevation gain.</div>
+    </div>
+    <div class="field">
+      <label>Smoothing</label>
+      <div class="row"><input type="number" id="p_eleSmooth" min="0" step="1">
+        <span class="unit">pts</span></div>
+      <div class="hint">Moving window of GPS points to smooth elevation before summing gain. 0 = off.</div>
+    </div>
+
+    <h2>Speed and distance calculation</h2>
+    <div class="field">
+      <label>Threshold</label>
+      <div class="row"><input type="number" id="p_distThresh" min="0" step="1">
+        <span class="unit" id="u_dist">ft</span></div>
+      <div class="hint">Min move from anchor to count as travel.</div>
+    </div>
+    <div class="field">
+      <label>Smoothing</label>
+      <div class="row"><input type="number" id="p_smooth" min="1" max="201" step="1">
+        <span class="unit">pts</span></div>
+      <div class="hint">Moving average for speed &amp; grade.</div>
+    </div>
+
+    <h2>Moving / stopped</h2>
+    <div class="field">
+      <label>Moving speed threshold</label>
+      <div class="row"><input type="number" id="p_moveThresh" min="0" step="0.1">
+        <span class="unit" id="u_speed">mph</span></div>
+      <div class="hint">Below this a segment counts as stopped.</div>
+    </div>
+    <div class="field">
+      <label>Rest marker duration</label>
+      <div class="row"><input type="number" id="p_stopThresh" min="0" step="0.5">
+        <span class="unit">min</span></div>
+      <div class="hint">Stops longer than this get a red line on the graphs.</div>
+    </div>
+
+    <h2>Calories</h2>
+    <div class="field">
+      <label>Model</label>
+      <select id="p_model">
+        <option value="pandolf">Pandolf / Santee (load &amp; grade)</option>
+        <option value="met">MET / ACSM walking</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Body weight</label>
+      <div class="row"><input type="number" id="p_weight" min="1" step="1">
+        <span class="unit" id="u_wt">lb</span></div>
+    </div>
+    <div class="field">
+      <label>Pack / load weight</label>
+      <div class="row"><input type="number" id="p_pack" min="0" step="1">
+        <span class="unit" id="u_wt2">lb</span></div>
+    </div>
+    <div class="field" id="etaField">
+      <label>Terrain factor η</label>
+      <input type="number" id="p_eta" min="1" max="2.5" step="0.05">
+      <div class="hint">1.0 paved · 1.2 trail · 1.5+ rough/loose.</div>
+    </div>
+  </aside>
+  <div id="sideToggle" title="Show/hide settings">
+    <span class="st-arrow">›</span>
+    <span class="st-label">Settings</span>
+  </div>
+
+  <main>
+    <div id="dropzone" class="drop">
+      <p style="font-size:16px"><strong>Drop a .gpx file here</strong> or click “Load GPX…”.</p>
+      <p>Everything runs locally in your browser. Try the included <code>sample-hike.gpx</code>.</p>
+    </div>
+
+    <div id="results" class="hidden">
+      <div id="messages"></div>
+      <div class="cards" id="cards"></div>
+
+      <div class="readout" id="readout">
+        <span class="placeholder">Hover any chart or the map to inspect a point…</span>
+      </div>
+
+      <div class="sectiontitle">Route map <span style="text-transform:none;letter-spacing:0;color:#6b7a8a;font-weight:400">· Ctrl + wheel to zoom map</span></div>
+      <div class="maptools">
+        <div class="toggle" id="colorToggle">
+          <button data-c="grade">Color: Grade</button>
+          <button data-c="speed" class="on">Color: Speed</button>
+        </div>
+        <div class="colorbar"><span class="cap" id="cb_cap"></span><div class="sws" id="cb_sws"></div></div>
+      </div>
+      <div id="map"></div><div class="map-resize-handle" id="mapResizeHandle"></div>
+
+      <div class="chartbox"><h3 id="t_ele">Elevation</h3>
+        <div class="chartwrap"><canvas id="c_ele"></canvas></div></div>
+      <div class="chartbox"><h3 id="t_spd">Speed</h3>
+        <div class="chartwrap"><canvas id="c_spd"></canvas></div></div>
+      <div class="chartbox"><h3 id="t_cal">Calorie burn rate</h3>
+        <div class="chartwrap"><canvas id="c_cal"></canvas></div></div>
+
+      <div class="sectiontitle">Distance in grade</div>
+      <div class="chartbox"><div class="chartwrap short"><canvas id="c_hist"></canvas></div></div>
+
+      <div class="sectiontitle">Speed over time</div>
+      <div class="chartbox" id="box_spdtime"><div class="chartwrap"><canvas id="c_spdtime"></canvas></div></div>
+    </div>
+  </main>
+</div>
+<div class="footer">OpenHikeStats · local GPX analysis · no data leaves your browser</div>
+
+<script src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div class="modal-bg hidden" id="browseModal">
+  <div class="modal">
+    <div class="mhead">
+      <strong>Browse multiple GPX</strong>
+      <button class="mclose" id="browseClose" title="Close">&times;</button>
+    </div>
+    <div class="mtools">
+      <button class="btn primary" id="pickDir">Select directory…</button>
+      <span id="browseStatus" class="muted">Choose a folder — every .gpx file in it will be summarized below.</span>
+    </div>
+    <div class="tablewrap">
+      <table class="gtable" id="browseTable">
+        <thead><tr>
+          <th data-key="name">Filename <span class="arr"></span></th>
+          <th>Profile<br><span style="font-size:10px;text-transform:none;letter-spacing:0;font-weight:400;color:#6b7a8a">Elevation over distance. Color&nbsp;=&nbsp;speed</span></th>
+          <th data-key="start">Start <span class="arr"></span></th>
+          <th data-key="dist" class="num">Distance <span class="arr"></span></th>
+          <th data-key="gain" class="num">Elev gain <span class="arr"></span></th>
+          <th data-key="time" class="num">Total time <span class="arr"></span></th>
+          <th data-key="movtime" class="num">Moving time <span class="arr"></span></th>
+          <th data-key="speed" class="num">Avg speed <span class="arr"></span></th>
+          <th data-key="movspeed" class="num">Avg moving speed <span class="arr"></span></th>
+          <th data-key="cal" class="num">Calories <span class="arr"></span></th>
+        </tr></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+    <div class="mfoot muted">Double-click a row to open that hike in the main view.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ Units ============================ */
+const M_PER_FT = 0.3048, M_PER_MI = 1609.344, KG_PER_LB = 0.45359237;
+const U = {
+  imperial:{ system:'imperial',
+    ele:{f:m=>m/M_PER_FT, u:'ft', d:0},
+    dist:{f:m=>m/M_PER_MI, u:'mi', d:2},
+    distShort:{f:m=>m/M_PER_FT, u:'ft', d:0},
+    speed:{f:ms=>ms*2.2369363, u:'mph', d:1},
+    wt:{f:kg=>kg/KG_PER_LB, u:'lb', d:0, toM:lb=>lb*KG_PER_LB},
+    eleToM:v=>v*M_PER_FT, distToM:v=>v*M_PER_FT, speedToMs:v=>v/2.2369363 },
+  metric:{ system:'metric',
+    ele:{f:m=>m, u:'m', d:0},
+    dist:{f:m=>m/1000, u:'km', d:2},
+    distShort:{f:m=>m, u:'m', d:0},
+    speed:{f:ms=>ms*3.6, u:'kph', d:1},
+    wt:{f:kg=>kg, u:'kg', d:0, toM:kg=>kg},
+    eleToM:v=>v, distToM:v=>v, speedToMs:v=>v/3.6 }
+};
+let unit = U.imperial;
+const fmt=(x,d)=> (x==null||!isFinite(x))?'—':x.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
+const E=(m,d)=>fmt(unit.ele.f(m), d??unit.ele.d);
+const D=(m)=>fmt(unit.dist.f(m), unit.dist.d);
+const SP=(ms)=>fmt(unit.speed.f(ms), unit.speed.d);
+const fmtDur=(s)=>{ s=Math.round(s); const m=Math.floor(s/60), sec=s%60;
+  return m? (sec? m+'m '+sec+'s' : m+'m') : sec+'s'; };
+const fmtClock=(s)=>{ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  return h+':'+String(m).padStart(2,'0'); };
+const fmtStart=(d)=>{
+  const date=d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const time=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  return `${date} <small>${time}</small>`; };
+
+/* params kept internally in metric (m, m/s, kg) */
+const params = {
+  eleThresh: 40*M_PER_FT, eleSmooth: 10, distThresh: 60*M_PER_FT, smooth: 50,
+  moveThresh: 0.5/2.2369363, stopThresh: 120, model:'pandolf',
+  weight: 160*KG_PER_LB, pack: 6*KG_PER_LB, eta: 1.2,
+  gpsOutlierK: 5
+};
+
+/* ============================ Geo ============================ */
+function haversine(a, b){
+  const R=6371000, toR=Math.PI/180;
+  const dLat=(b.lat-a.lat)*toR, dLon=(b.lon-a.lon)*toR;
+  const la1=a.lat*toR, la2=b.lat*toR;
+  const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+
+/* ============================ GPX parsing ============================ */
+function parseGPX(text){
+  const doc = new DOMParser().parseFromString(text,'application/xml');
+  if(doc.querySelector('parsererror')) throw new Error('Not valid XML / GPX.');
+  const trkpts = [...doc.getElementsByTagName('trkpt')];
+  const src = trkpts.length ? trkpts : [...doc.getElementsByTagName('rtept')];
+  if(!src.length) throw new Error('No track points (<trkpt>) found in this GPX.');
+  const pts = [];
+  for(const p of src){
+    const lat=parseFloat(p.getAttribute('lat')), lon=parseFloat(p.getAttribute('lon'));
+    if(!isFinite(lat)||!isFinite(lon)) continue;
+    const eleEl=p.getElementsByTagName('ele')[0];
+    const timeEl=p.getElementsByTagName('time')[0];
+    let hr=null;
+    const hrEl=p.getElementsByTagName('gpxtpx:hr')[0]||p.getElementsByTagName('hr')[0];
+    if(hrEl) hr=parseFloat(hrEl.textContent);
+    pts.push({
+      lat, lon,
+      ele: eleEl? parseFloat(eleEl.textContent): null,
+      time: timeEl? new Date(timeEl.textContent.trim()): null,
+      hr: (hr!=null&&isFinite(hr))?hr:null
+    });
+  }
+  if(pts.length<2) throw new Error('Need at least two valid points to analyze.');
+  return pts;
+}
+
+/* ============================ Processing ============================ */
+function movingAvg(arr, win){
+  if(win<=1) return arr.slice();
+  const half=Math.floor(win/2), out=new Array(arr.length);
+  for(let i=0;i<arr.length;i++){
+    let s=0,n=0;
+    for(let j=Math.max(0,i-half);j<=Math.min(arr.length-1,i+half);j++){
+      if(arr[j]!=null&&isFinite(arr[j])){s+=arr[j];n++;}
+    }
+    out[i]= n? s/n : arr[i];
+  }
+  return out;
+}
+
+// Elevation gain/loss with hysteresis deadband.
+function elevationStats(eles, thr){
+  let ref=null, dir=0, gain=0, loss=0;
+  for(const e of eles){
+    if(e==null||!isFinite(e)) continue;
+    if(ref==null){ref=e; continue;}
+    if(dir===0){
+      if(e-ref>=thr){dir=1; gain+=e-ref; ref=e;}
+      else if(ref-e>=thr){dir=-1; loss+=ref-e; ref=e;}
+    } else if(dir===1){
+      if(e>=ref){gain+=e-ref; ref=e;}
+      else if(ref-e>=thr){dir=-1; loss+=ref-e; ref=e;}
+    } else {
+      if(e<=ref){loss+=ref-e; ref=e;}
+      else if(e-ref>=thr){dir=1; gain+=e-ref; ref=e;}
+    }
+  }
+  return {gain, loss};
+}
+
+function calories(model, V, G, W, L, eta){
+  // V m/s, G grade %, W body kg, L load kg
+  if(V<=0) return 0; // per-second watts; resting handled as ~0 contribution to "burn rate"
+  // GPS elevation noise over short segments can produce non-physical grades (e.g. -100%);
+  // the Pandolf/Santee downhill term has a (G+6)^2 factor that then explodes. Clamp to a
+  // realistic hiking range so a single noisy point can't blow up the burn-rate estimate.
+  G = Math.max(-40, Math.min(40, G));
+  if(model==='pandolf'){
+    let M = 1.5*W + 2.0*(W+L)*Math.pow(L/W,2)
+          + eta*(W+L)*(1.5*V*V + 0.35*V*G);
+    if(G<0){
+      const Cf = eta*( (G*(W+L)*V)/3.5 - ((W+L)*Math.pow(G+6,2))/W + 25*V*V );
+      M -= Cf;
+    }
+    return Math.max(M,1.5*W); // watts, floored at standing metabolism
+  } else { // ACSM walking, VO2 ml/kg/min
+    const Vm=V*60, gf=G/100;
+    let vo2 = 3.5 + 0.1*Vm + 1.8*Vm*Math.max(gf,0);
+    const kcalPerMin = vo2*W*5/1000;
+    return kcalPerMin/60*4184; // -> watts for uniform handling
+  }
+}
+
+/* GPS bilateral outlier filter.
+   Phase 1 — iterative bilateral AND: remove P[i] if BOTH the step to its predecessor
+   and the step to its successor exceed K × (local median step in a ±W window). Repeats
+   until no more points are removed — catches isolated blips and obvious burst errors.
+   Phase 2 — single simultaneous extreme incoming-step pass (J = 2K): also removes P[i]
+   if its incoming step (d_prev) exceeds J × local median. Only d_prev is checked —
+   flagging on d_next would incorrectly penalise the legitimate predecessor of a gap
+   created by a phase-1 removal. All removals are marked simultaneously (no iteration)
+   to prevent cascade. Catches the trailing point of a directional burst. */
+function gpsOutlierFilter(pts, K){
+  if(!K||K<=0||pts.length<5) return pts;
+  const W=10, J=2*K;
+  function stepDists(arr){
+    const s=new Array(arr.length).fill(0);
+    for(let i=1;i<arr.length;i++) s[i]=haversine(arr[i-1],arr[i]);
+    return s;
+  }
+  function localMedian(step,i){
+    const ctx=[];
+    for(let j=Math.max(1,i-W);j<=i-1;j++) ctx.push(step[j]);
+    for(let j=i+2;j<=Math.min(step.length-1,i+1+W);j++) ctx.push(step[j]);
+    if(ctx.length<3) return null;
+    ctx.sort((a,b)=>a-b);
+    const m=ctx.length>>1;
+    return ctx.length%2 ? ctx[m] : (ctx[m-1]+ctx[m])/2;
+  }
+  // Phase 1: iterative bilateral AND
+  let cur=pts.slice(), changed=true;
+  while(changed){
+    changed=false;
+    const step=stepDists(cur), n=cur.length, keep=new Array(n).fill(true);
+    for(let i=1;i<n-1;i++){
+      const med=localMedian(step,i);
+      if(!med||med<0.1) continue;
+      if(step[i]>K*med && step[i+1]>K*med){keep[i]=false; changed=true;}
+    }
+    if(changed) cur=cur.filter((_,i)=>keep[i]);
+  }
+  // Phase 2: single simultaneous extreme single-side pass (no iteration — prevents cascade)
+  const step2=stepDists(cur), n2=cur.length, keep2=new Array(n2).fill(true);
+  for(let i=1;i<n2-1;i++){
+    const med=localMedian(step2,i);
+    if(!med||med<0.1) continue;
+    if(step2[i]>J*med) keep2[i]=false;
+  }
+  return cur.filter((_,i)=>keep2[i]);
+}
+
+function analyze(rawPts, p){
+  rawPts = gpsOutlierFilter(rawPts, p.gpsOutlierK);
+  const hasTime = rawPts.every(pt=>pt.time && !isNaN(pt.time));
+  const hasEle  = rawPts.some(pt=>pt.ele!=null && isFinite(pt.ele));
+  const hasHR   = rawPts.some(pt=>pt.hr!=null);
+
+  // 1) distance deadband -> cleaned track
+  const clean=[]; let anchor=rawPts[0], cum=0;
+  clean.push({lat:anchor.lat,lon:anchor.lon,ele:anchor.ele,time:anchor.time,hr:anchor.hr,dist:0});
+  for(let i=1;i<rawPts.length;i++){
+    const d=haversine(anchor, rawPts[i]);
+    if(d>=p.distThresh){
+      cum+=d;
+      const pt=rawPts[i];
+      clean.push({lat:pt.lat,lon:pt.lon,ele:pt.ele,time:pt.time,hr:pt.hr,dist:cum});
+      anchor=pt;
+    }
+  }
+  // ensure final point present
+  if(clean[clean.length-1]!==rawPts[rawPts.length-1] && rawPts.length>1){
+    const last=rawPts[rawPts.length-1];
+    const d=haversine({lat:clean[clean.length-1].lat,lon:clean[clean.length-1].lon}, last);
+    if(d>0){cum+=d; clean.push({lat:last.lat,lon:last.lon,ele:last.ele,time:last.time,hr:last.hr,dist:cum});}
+  }
+  const n=clean.length;
+
+  // 2) per-segment raw speed & grade
+  const rawSpeed=new Array(n).fill(0), rawGrade=new Array(n).fill(0), dts=new Array(n).fill(0);
+  for(let i=1;i<n;i++){
+    const seg=clean[i].dist-clean[i-1].dist;
+    if(hasTime){
+      const dt=(clean[i].time-clean[i-1].time)/1000;
+      dts[i]=dt;
+      rawSpeed[i]= dt>0? seg/dt : 0;
+    }
+    if(hasEle && clean[i].ele!=null && clean[i-1].ele!=null && seg>0){
+      rawGrade[i]=100*(clean[i].ele-clean[i-1].ele)/seg;
+    }
+  }
+  const speed=movingAvg(rawSpeed, p.smooth);
+  const grade=movingAvg(rawGrade, p.smooth);
+  // Elevation is smoothed with a moving window of GPS points before gain/loss is summed
+  // (the chart uses the same series, so the profile and the headline gain stat stay consistent).
+  const eleSm=hasEle? movingAvg(clean.map(c=>c.ele), p.eleSmooth) : clean.map(_=>null);
+
+  // 3) calories per segment — cumulative total (for stats) + instantaneous burn rate (kcal/hr)
+  const cumCal=new Array(n).fill(0), calRateRaw=new Array(n).fill(0);
+  let totCal=0;
+  if(hasTime && hasEle){
+    for(let i=1;i<n;i++){
+      const watts=calories(p.model, rawSpeed[i], rawGrade[i], p.weight, p.pack, p.eta);
+      const kcal = watts*dts[i]/4184;
+      totCal += Math.max(0,kcal);
+      cumCal[i]=totCal;
+      calRateRaw[i]= Math.max(0,watts)*3600/4184; // watts -> kcal/hr
+    }
+    calRateRaw[0]=calRateRaw[1]||0;
+  }
+  const calRate=movingAvg(calRateRaw, p.smooth);
+
+  // rest stops: contiguous below-threshold spans whose total time exceeds p.stopThresh
+  const stops=[];
+  if(hasTime){
+    let runDt=0, runStartI=null;
+    const t0abs=clean[0].time;
+    const commit=(s,e,dur)=>{
+      const mid=(clean[s].dist+clean[e].dist)/2;
+      let bi=s; for(let k=s;k<=e;k++){ if(Math.abs(clean[k].dist-mid)<Math.abs(clean[bi].dist-mid)) bi=k; }
+      stops.push({dist:mid, dur, lat:clean[bi].lat, lon:clean[bi].lon,
+        t0:(clean[s].time-t0abs)/1000, t1:(clean[e].time-t0abs)/1000});
+    };
+    for(let i=1;i<n;i++){
+      if(rawSpeed[i]<p.moveThresh){
+        if(runStartI==null) runStartI=i-1;
+        runDt+=dts[i];
+      } else {
+        if(runDt>=p.stopThresh) commit(runStartI,i-1,runDt);
+        runDt=0; runStartI=null;
+      }
+    }
+    if(runDt>=p.stopThresh) commit(runStartI,n-1,runDt);
+  }
+
+  // 4) stats
+  const distance=clean[n-1].dist;
+  const {gain,loss}= hasEle? elevationStats(eleSm, p.eleThresh) : {gain:null,loss:null};
+  let maxEle=null,minEle=null;
+  if(hasEle){ for(const c of clean){ if(c.ele==null)continue;
+    maxEle=maxEle==null?c.ele:Math.max(maxEle,c.ele); minEle=minEle==null?c.ele:Math.min(minEle,c.ele);} }
+
+  let totalTime=null, movingTime=0, maxSpeed=0;
+  if(hasTime){
+    totalTime=(clean[n-1].time-clean[0].time)/1000;
+    for(let i=1;i<n;i++){ if(rawSpeed[i]>=p.moveThresh) movingTime+=dts[i]; }
+    maxSpeed=Math.max(...speed);
+  }
+  const stoppedTime= hasTime? Math.max(0,totalTime-movingTime): null;
+  const avgSpeed= hasTime&&totalTime>0? distance/totalTime: null;
+  const avgMoveSpeed= hasTime&&movingTime>0? distance/movingTime: null;
+  let maxGrade=0,minGrade=0;
+  if(hasEle){ for(const g of grade){ maxGrade=Math.max(maxGrade,g); minGrade=Math.min(minGrade,g);} }
+
+  // derived
+  const gainFt= gain!=null? gain/M_PER_FT:null;
+  const distMi= distance/M_PER_MI;
+  const difficulty= gainFt!=null? Math.sqrt(2*gainFt*distMi): null;
+  const vam= (hasTime && gain!=null && movingTime>0)? gain/(movingTime/3600): null; // m/hr
+  // Naismith: 1h/5km + 1h/600m ascent
+  const naismith= gain!=null? (distance/1000)/5*3600 + (gain/600)*3600 : null;
+
+  // 5) build a decimated display dataset (charts/map/hover) — stats above stay full-res
+  const dy = hasEle? eleSm : (hasTime? speed : null);
+  const idx = lttb(n, DISPLAY_TARGET, j=>clean[j].dist, j=> dy? dy[j] : j);
+  const disp = {
+    idx,
+    dist:  idx.map(j=>clean[j].dist),
+    ele:   idx.map(j=>clean[j].ele),
+    eleSm: idx.map(j=>eleSm[j]),
+    speed: idx.map(j=>speed[j]),
+    grade: idx.map(j=>grade[j]),
+    cumCal:idx.map(j=>cumCal[j]),
+    calRate:idx.map(j=>calRate[j]),
+    lat:   idx.map(j=>clean[j].lat),
+    lon:   idx.map(j=>clean[j].lon),
+    time:  idx.map(j=>clean[j].time),
+    hr:    idx.map(j=>clean[j].hr)
+  };
+
+  return {clean, disp, hasTime, hasEle, hasHR, speed, grade, eleSm, cumCal, calRate, dts, stops,
+    stats:{distance,gain,loss,maxEle,minEle,totalTime,movingTime,stoppedTime,
+      avgSpeed,avgMoveSpeed,maxSpeed,maxGrade,minGrade,totCal,difficulty,vam,naismith,
+      startTime: hasTime? clean[0].time : null}};
+}
+
+// Largest-Triangle-Three-Buckets downsampling — preserves visual peaks/valleys.
+const DISPLAY_TARGET = 700;
+function lttb(n, threshold, getX, getY){
+  if(threshold>=n || threshold<3) return [...Array(n).keys()];
+  const sampled=[0];
+  const every=(n-2)/(threshold-2);
+  let a=0;
+  for(let i=0;i<threshold-2;i++){
+    let start=Math.floor((i+1)*every)+1, end=Math.min(Math.floor((i+2)*every)+1, n);
+    let avgX=0,avgY=0; const len=Math.max(1,end-start);
+    for(let j=start;j<end;j++){ avgX+=getX(j); avgY+=getY(j); }
+    avgX/=len; avgY/=len;
+    const rs=Math.floor(i*every)+1, re=Math.floor((i+1)*every)+1;
+    const ax=getX(a), ay=getY(a);
+    let maxArea=-1, next=rs;
+    for(let j=rs;j<re;j++){
+      const area=Math.abs((ax-avgX)*(getY(j)-ay)-(ax-getX(j))*(avgY-ay));
+      if(area>maxArea){ maxArea=area; next=j; }
+    }
+    sampled.push(next); a=next;
+  }
+  sampled.push(n-1);
+  return sampled;
+}
+// Unified grade buckets — flat band ±2, consistent width-4 steps, symmetric around
+// zero. Used everywhere grade is binned: the histogram, the map track coloring, and
+// the elevation-profile coloring.
+const GRADE_EDGES=[-18,-14,-10,-6,-2,2,6,10,14,18];
+function gradeBucket(g){ let i=0; while(i<GRADE_EDGES.length && g>=GRADE_EDGES[i]) i++; return i; }
+function bucketCenter(i){
+  if(i===0) return GRADE_EDGES[0]-2;
+  if(i>=GRADE_EDGES.length) return GRADE_EDGES[GRADE_EDGES.length-1]+2;
+  return (GRADE_EDGES[i-1]+GRADE_EDGES[i])/2;
+}
+function bucketColor(i){ return gradeColor(bucketCenter(i)); }
+function bucketLabel(i){
+  if(i===0) return '<'+GRADE_EDGES[0];
+  if(i>=GRADE_EDGES.length) return '>'+GRADE_EDGES[GRADE_EDGES.length-1];
+  return GRADE_EDGES[i-1]+' to '+GRADE_EDGES[i];
+}
+
+/* ============================ Formatting helpers ============================ */
+function hms(sec){
+  if(sec==null||!isFinite(sec)) return '—';
+  sec=Math.round(sec); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60;
+  return h? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+          : `${m}:${String(s).padStart(2,'0')}`;
+}
+function difficultyBand(d){
+  if(d==null) return '';
+  if(d<50) return 'Easy'; if(d<100) return 'Moderate';
+  if(d<150) return 'Moderately strenuous'; if(d<200) return 'Strenuous';
+  return 'Very strenuous';
+}
+function gradeColor(g){
+  // green(flat) -> orange -> red(steep up); blue for downhill
+  if(g<0){ const t=Math.min(1,Math.abs(g)/25); return `hsl(205,80%,${65-t*20}%)`; }
+  const t=Math.min(1,g/25);
+  return `hsl(${120-120*t},75%,${55-t*5}%)`;
+}
+// Speed colormap: blue(slow) -> cyan -> green -> yellow -> red(fast), normalized over the
+// dataset's speed range. Quantized so the map can merge consecutive same-color segments.
+function speedColor(v, lo, hi){
+  let t = hi>lo ? (v-lo)/(hi-lo) : 0.5;
+  t = Math.round(Math.max(0,Math.min(1,t))*10)/10;
+  return `hsl(${240-240*t},75%,52%)`;
+}
+// Normalized diverging grade colormap: dark blue at the dataset's steepest descent ->
+// green at flat -> red at the steepest climb. Normalizing to the (smoothed) data range
+// makes the track + legend use the full colour span, like the speed map. Quantized to
+// 0.1 steps so the map can merge consecutive same-colour segments.
+function gradeColorN(v, lo, hi){
+  if(v<0){ let t = lo<0 ? Math.min(1, v/lo) : 0; t=Math.round(t*10)/10;
+    return `hsl(${120+105*t},75%,${52-20*t}%)`; }   // green -> dark blue
+  let t = hi>0 ? Math.min(1, v/hi) : 0; t=Math.round(t*10)/10;
+  return `hsl(${120-120*t},75%,52%)`;               // green -> red
+}
+// Per display-point color for the active mode (drives both the elevation profile and map).
+function segColor(i){
+  if(colorMode==='speed' && A.hasTime) return speedColor(A.disp.speed[i]||0, A._sLo, A._sHi);
+  return gradeColorN(A.disp.grade[i]||0, A._gLo, A._gHi);
+}
+
+/* ============================ State & charts ============================ */
+let RAW=null, A=null;
+let colorMode='speed'; // 'grade' | 'speed' — global, applies to map + elevation profile
+let chEle=null, chSpd=null, chCal=null, chHist=null, chSpdTime=null;
+let map=null, trackLayer=null, marker=null, selMapLayer=null;
+let dragSel=null;
+let hoverIndex=null;
+let overlays=[]; // {chart, canvas, ctx} — crosshair layer drawn on top of each chart
+
+if(window.Chart){
+  Chart.defaults.color='#90a0b0'; Chart.defaults.font.family='system-ui';
+  Chart.defaults.animation=false;
+}
+
+// Charts are drawn once; hover never redraws them (events disabled, tooltip off) —
+// the moving crosshair lives on a separate overlay canvas for cheap, smooth hover.
+function baseOpts(yLabel, fmtY, maxX){
+  return {
+    responsive:true, maintainAspectRatio:false, animation:false,
+    events:[], plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+    scales:{
+      x:{type:'linear', min:0, max:maxX,
+         title:{display:true,text:'Distance ('+unit.dist.u+')'},
+         afterBuildTicks(scale){
+           const step=2*M_PER_MI, max=scale.max, ticks=[];
+           for(let v=0; v<=max-0.5; v+=step) ticks.push({value:v});
+           ticks.push({value:max});
+           scale.ticks=ticks;
+         },
+         ticks:{callback:v=>fmt(unit.dist.f(v),unit.dist.d)},
+         grid:{color:'#22303c'}},
+      y:{title:{display:true,text:yLabel}, ticks:{callback:fmtY}, grid:{color:'#22303c'}}
+    }
+  };
+}
+
+// Draws red vertical lines on the distance charts at logged rest stops.
+const stopLinePlugin={
+  id:'stopLines',
+  afterDatasetsDraw(chart){
+    if(!A||!A.stops||!A.stops.length) return;
+    const x=chart.scales.x, a=chart.chartArea, ctx=chart.ctx;
+    ctx.save();
+    ctx.strokeStyle='rgba(255,80,80,.9)'; ctx.lineWidth=1.5;
+    for(const s of A.stops){
+      const px=x.getPixelForValue(s.dist);
+      if(px<a.left-0.5||px>a.right+0.5) continue;
+      ctx.beginPath(); ctx.moveTo(px,a.top); ctx.lineTo(px,a.bottom); ctx.stroke();
+    }
+    ctx.restore();
+  }
+};
+
+// Draws translucent red bars on the speed-over-time chart spanning each rest's real duration.
+const restBarPlugin={
+  id:'restBars',
+  beforeDatasetsDraw(chart){
+    if(!A||!A.stops||!A.stops.length) return;
+    const x=chart.scales.x, a=chart.chartArea, ctx=chart.ctx;
+    ctx.save(); ctx.fillStyle='rgba(255,80,80,.28)';
+    for(const s of A.stops){
+      if(s.t0==null||s.t1==null) continue;
+      let x0=x.getPixelForValue(s.t0), x1=x.getPixelForValue(s.t1);
+      x0=Math.max(a.left,x0); x1=Math.min(a.right,x1);
+      if(x1<=x0) x1=x0+1.5; // keep very short rests visible
+      ctx.fillRect(x0, a.top, x1-x0, a.bottom-a.top);
+    }
+    ctx.restore();
+  }
+};
+
+// Standalone speed-vs-elapsed-time chart (not linked to the distance charts).
+function buildSpeedTime(){
+  if(chSpdTime){ chSpdTime.destroy(); chSpdTime=null; }
+  const box=document.getElementById('box_spdtime');
+  const show=A.hasTime;
+  document.querySelectorAll('.sectiontitle').forEach(el=>{ if(el.textContent==='Speed over time') el.classList.toggle('hidden',!show); });
+  box.classList.toggle('hidden',!show);
+  if(!show) return;
+  const Dd=A.disp, t0=Dd.time[0].getTime();
+  const stops=A.stops||[];
+  const inRest=x=>stops.some(s=>x>=s.t0 && x<=s.t1);
+  // The distance-deadband pipeline drops stationary points, which would leave the line
+  // elevated across a rest. Remove any points inside a rest and pin speed to 0 at its
+  // boundaries so the line truthfully drops to zero while stopped.
+  const data=Dd.time.map((t,i)=>({x:(t.getTime()-t0)/1000, y:unit.speed.f(Dd.speed[i])}))
+    .filter(p=>!inRest(p.x));
+  for(const s of stops){ data.push({x:s.t0,y:0},{x:s.t1,y:0}); }
+  data.sort((a,b)=>a.x-b.x);
+  chSpdTime=new Chart(document.getElementById('c_spdtime'),{
+    type:'line',
+    data:{datasets:[{data, parsing:false, borderWidth:1.5,
+      borderColor:'var(--green)', backgroundColor:'rgba(92,214,160,.12)', fill:true,
+      pointRadius:0, tension:.2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{
+          title:items=>'Time '+fmtClock(items[0].parsed.x),
+          label:it=>'Speed '+fmt(it.parsed.y,1)+' '+unit.speed.u}}},
+      scales:{
+        x:{type:'linear',min:0,max:data.length?data[data.length-1].x:undefined,
+           title:{display:true,text:'Time since start (h:mm)'},
+           afterBuildTicks(scale){
+             const step=1800, max=scale.max, ticks=[];
+             for(let v=0; v<=max-0.5; v+=step) ticks.push({value:v});
+             ticks.push({value:max});
+             scale.ticks=ticks;
+           },
+           ticks:{callback:v=>fmtClock(v)},grid:{color:'#22303c'}},
+        y:{min:0,title:{display:true,text:'Speed ('+unit.speed.u+')'},
+           ticks:{callback:v=>fmt(v,1)},grid:{color:'#22303c'}}}},
+    plugins:[restBarPlugin]
+  });
+}
+
+function buildCharts(){
+  destroyCharts();
+  const Dd=A.disp, xs=Dd.dist;
+  const dz='var(--accent)';
+
+  if(A.hasEle){
+    const data=xs.map((x,i)=>({x, y:Dd.eleSm[i]}));
+    chEle=new Chart(document.getElementById('c_ele'),{
+      type:'line', data:{datasets:[
+        // solid fill underneath — drawn as one flat area so there are no per-segment seams
+        {data, parsing:false, borderWidth:0, backgroundColor:'rgba(76,166,255,.12)',
+         fill:true, pointRadius:0, tension:.1},
+        // colour-coded line on top (grade/speed), no fill
+        {data, parsing:false, borderWidth:1.5, borderColor:dz, fill:false,
+         pointRadius:0, tension:.1, segment:{borderColor:ctx=>segColor(ctx.p1DataIndex)}}
+      ]},
+      options:baseOpts('Elevation ('+unit.ele.u+')',
+        v=>fmt(unit.ele.f(v),0), xs[xs.length-1]),
+      plugins:[stopLinePlugin]
+    });
+  }
+  if(A.hasTime){
+    const data=xs.map((x,i)=>({x, y:unit.speed.f(Dd.speed[i])}));
+    chSpd=new Chart(document.getElementById('c_spd'),{
+      type:'line', data:{datasets:[{data, parsing:false, borderWidth:1.5,
+        borderColor:'var(--green)', backgroundColor:'rgba(92,214,160,.12)', fill:true,
+        pointRadius:0, tension:.2}]},
+      options:baseOpts('Speed ('+unit.speed.u+')',
+        v=>fmt(v,1), xs[xs.length-1]),
+      plugins:[stopLinePlugin]
+    });
+    if(A.hasEle){
+      const cd=xs.map((x,i)=>({x, y:Dd.calRate[i]}));
+      chCal=new Chart(document.getElementById('c_cal'),{
+        type:'line', data:{datasets:[{data:cd, parsing:false, borderWidth:1.5,
+          borderColor:'var(--accent2)', backgroundColor:'rgba(255,180,84,.12)', fill:true,
+          pointRadius:0, tension:.1}]},
+        options:baseOpts('Burn rate (kcal/hr)', v=>fmt(v,0), xs[xs.length-1]),
+        plugins:[stopLinePlugin]
+      });
+    }
+  }
+  document.getElementById('c_spd').parentElement.parentElement.classList.toggle('hidden',!A.hasTime);
+  document.getElementById('c_cal').parentElement.parentElement.classList.toggle('hidden',!(A.hasTime&&A.hasEle));
+  document.getElementById('c_ele').parentElement.parentElement.classList.toggle('hidden',!A.hasEle);
+  setupOverlays();
+  buildHistogram();
+  buildSpeedTime();
+  buildColorbar();
+}
+
+/* ============================ Crosshair overlays ============================ */
+function setupOverlays(){
+  overlays=[];
+  [chEle,chSpd,chCal].forEach(c=>{ if(!c) return;
+    const wrap=c.canvas.parentElement;
+    let cv=wrap.querySelector('canvas.ovl');
+    if(!cv){ cv=document.createElement('canvas'); cv.className='ovl';
+      cv.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';
+      wrap.appendChild(cv); }
+    const o={chart:c, canvas:cv, ctx:cv.getContext('2d')};
+    sizeOverlay(o);
+    overlays.push(o);
+    // our own hover detection — no Chart.js redraws involved
+    const target=c.canvas;
+    target.onmousemove=(e)=>{
+      const px=e.clientX - c.canvas.getBoundingClientRect().left;
+      const xval=c.scales.x.getValueForPixel(px);
+      setHover(nearestIndex(A.disp.dist, xval));
+      // show a small popup when the cursor is near a rest-stop line
+      let near=null;
+      if(A&&A.stops) for(const s of A.stops){
+        if(Math.abs(c.scales.x.getPixelForValue(s.dist)-px)<=5){ near=s; break; }
+      }
+      if(near) showStopPop(e.clientX, e.clientY, 'Rest '+fmtDur(near.dur));
+      else hideStopPop();
+    };
+    target.onmouseleave=()=>{ if(!dragSel){ clearHover(); hideStopPop(); } };
+    target.style.cursor='crosshair';
+    target.addEventListener('mousedown',e=>{
+      if(e.button!==0) return;
+      const px=e.clientX-c.canvas.getBoundingClientRect().left;
+      e.preventDefault();
+      const raw=c.scales.x.getValueForPixel(px);
+      const d=Math.max(c.scales.x.min, Math.min(c.scales.x.max, raw));
+      dragSel={startDist:d, endDist:d, anchorChart:c, clientX:e.clientX, clientY:e.clientY};
+    });
+  });
+}
+function sizeOverlay(o){
+  const dpr=window.devicePixelRatio||1;
+  const w=o.chart.canvas.clientWidth, h=o.chart.canvas.clientHeight;
+  o.canvas.width=w*dpr; o.canvas.height=h*dpr; o._w=w; o._h=h;
+  o.ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function nearestIndex(arr, v){
+  if(v<=arr[0]) return 0; if(v>=arr[arr.length-1]) return arr.length-1;
+  let lo=0, hi=arr.length-1;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(arr[mid]<v) lo=mid; else hi=mid; }
+  return (v-arr[lo] < arr[hi]-v)? lo : hi;
+}
+function drawOverlays(i){
+  for(const o of overlays){
+    const c=o.chart, ctx=o.ctx;
+    if(o._w!==c.canvas.clientWidth || o._h!==c.canvas.clientHeight) sizeOverlay(o);
+    ctx.clearRect(0,0,o._w,o._h);
+    if(dragSel){
+      const ca=c.chartArea;
+      const x0=c.scales.x.getPixelForValue(Math.min(dragSel.startDist,dragSel.endDist));
+      const x1=c.scales.x.getPixelForValue(Math.max(dragSel.startDist,dragSel.endDist));
+      ctx.save();
+      ctx.fillStyle='rgba(76,166,255,.18)';
+      ctx.fillRect(x0,ca.top,x1-x0,ca.bottom-ca.top);
+      ctx.strokeStyle='rgba(76,166,255,.65)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x0,ca.top); ctx.lineTo(x0,ca.bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1,ca.top); ctx.lineTo(x1,ca.bottom); ctx.stroke();
+      ctx.restore();
+    }
+    const dat=c.data.datasets[0].data[i]; if(!dat) continue;
+    const x=c.scales.x.getPixelForValue(dat.x), y=c.scales.y.getPixelForValue(dat.y);
+    const a=c.chartArea;
+    ctx.strokeStyle='rgba(76,166,255,.75)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,a.top); ctx.lineTo(x,a.bottom); ctx.stroke();
+    ctx.fillStyle='#4ca6ff'; ctx.beginPath(); ctx.arc(x,y,3.5,0,7); ctx.fill();
+  }
+}
+function clearOverlays(){ for(const o of overlays) o.ctx.clearRect(0,0,o._w,o._h); }
+
+let stopPop=null;
+function showStopPop(x,y,text){
+  if(!stopPop){ stopPop=document.createElement('div');
+    stopPop.style.cssText='position:fixed;z-index:1000;pointer-events:none;background:#ff5050;'+
+      'color:#fff;font:600 11px system-ui,sans-serif;padding:3px 7px;border-radius:4px;'+
+      'white-space:nowrap;transform:translate(-50%,-130%);box-shadow:0 1px 4px rgba(0,0,0,.4)';
+    document.body.appendChild(stopPop); }
+  stopPop.textContent=text; stopPop.style.left=x+'px'; stopPop.style.top=y+'px';
+  stopPop.style.display='block';
+}
+function hideStopPop(){ if(stopPop) stopPop.style.display='none'; }
+
+function buildHistogram(){
+  const titleEl=document.querySelectorAll('.sectiontitle')[1];
+  if(!A.hasEle){ document.getElementById('c_hist').closest('.chartbox').classList.add('hidden');
+    if(titleEl) titleEl.classList.add('hidden'); return; }
+  document.getElementById('c_hist').closest('.chartbox').classList.remove('hidden');
+  if(titleEl) titleEl.classList.remove('hidden');
+  const nb=GRADE_EDGES.length+1;
+  const dist=new Array(nb).fill(0);
+  for(let i=1;i<A.clean.length;i++){
+    dist[gradeBucket(A.grade[i])] += A.clean[i].dist-A.clean[i-1].dist;
+  }
+  if(chHist) chHist.destroy();
+  chHist=new Chart(document.getElementById('c_hist'),{
+    type:'bar', data:{labels:dist.map((_,i)=>bucketLabel(i)),
+      datasets:[{data:dist.map(m=>unit.dist.f(m)),
+        backgroundColor:dist.map((_,i)=>bucketColor(i))}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{title:items=>'Grade '+bucketLabel(items[0].dataIndex)+'%',
+        label:it=>fmt(it.raw,2)+' '+unit.dist.u}}},
+      scales:{x:{title:{display:true,text:'Grade (%)'},grid:{display:false}},
+        y:{title:{display:true,text:'Distance ('+unit.dist.u+')'},grid:{color:'#22303c'}}}}
+  });
+}
+
+function destroyCharts(){ [chEle,chSpd,chCal,chSpdTime].forEach(c=>c&&c.destroy()); chEle=chSpd=chCal=chSpdTime=null; }
+
+/* ============================ Map ============================ */
+/* ============================ Colour mode (grade / speed) ============================ */
+function computeColorRanges(){
+  const sp=A.disp.speed.filter(v=>v!=null&&isFinite(v));
+  A._sLo = sp.length?Math.min(...sp):0; A._sHi = sp.length?Math.max(...sp):1;
+  const gr=A.disp.grade.filter(v=>v!=null&&isFinite(v));
+  A._gLo = gr.length?Math.min(...gr):0; A._gHi = gr.length?Math.max(...gr):0;
+}
+function ensureColorModeAvailable(){
+  const gradeOK=A.hasEle, speedOK=A.hasTime;
+  if(colorMode==='grade'&&!gradeOK&&speedOK) colorMode='speed';
+  if(colorMode==='speed'&&!speedOK&&gradeOK) colorMode='grade';
+  document.querySelectorAll('#colorToggle button').forEach(b=>{
+    const ok = b.dataset.c==='grade'?gradeOK:speedOK;
+    b.disabled=!ok; b.classList.toggle('on', b.dataset.c===colorMode);
+  });
+}
+// Five-step legend keyed to the active mode, labelled evenly from the dataset min to max.
+function buildColorbar(){
+  const cap=document.getElementById('cb_cap'), sws=document.getElementById('cb_sws');
+  const speed = colorMode==='speed';
+  const lo = speed?A._sLo:A._gLo, hi = speed?A._sHi:A._gHi;
+  cap.textContent = speed? ('Speed ('+unit.speed.u+')') : 'Grade (%)';
+  let html='';
+  for(let k=0;k<5;k++){
+    const t=k/4, v=lo+t*(hi-lo);
+    const color = speed? speedColor(v,lo,hi) : gradeColorN(v,lo,hi);
+    const label = speed? SP(v) : fmt(v,0);
+    html+=`<div class="sw"><i style="background:${color}"></i><span>${label}</span></div>`;
+  }
+  sws.innerHTML=html;
+}
+
+function buildMap(fit=true){
+  const Dd=A.disp, latlngs=Dd.lat.map((la,i)=>[la,Dd.lon[i]]);
+  if(!map){
+    map=L.map('map',{preferCanvas:true, zoomSnap:0.25, wheelPxPerZoomLevel:240});
+    // Esri basemaps: keyless, no Referer requirement, work when opened from file://
+    const topo=L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, attribution:'Tiles &copy; Esri — Esri, USGS, NOAA, NRCAN, and the GIS community'}).addTo(map);
+    const imagery=L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, attribution:'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS community'});
+    L.control.layers({'Topographic':topo, 'Satellite':imagery}, null, {position:'topright'}).addTo(map);
+    // plain wheel = scroll the page; Ctrl + wheel = zoom the map (under the cursor)
+    map.scrollWheelZoom.disable();
+    map.getContainer().addEventListener('wheel', e=>{
+      if(!e.ctrlKey) return;
+      e.preventDefault();
+      map.setZoomAround(map.mouseEventToLatLng(e), map.getZoom() + (e.deltaY<0?1:-1));
+    }, {passive:false});
+  }
+  if(trackLayer) trackLayer.remove();
+  trackLayer=L.layerGroup().addTo(map);
+  // colour the track by the active mode, merging consecutive same-colour segments
+  const canColor = (colorMode==='speed'&&A.hasTime) || (colorMode==='grade'&&A.hasEle);
+  if(canColor && latlngs.length>1){
+    let runStart=0, curC=segColor(1);
+    const flush=(end,c)=>L.polyline(latlngs.slice(runStart,end+1),
+      {color:c, weight:4, opacity:.9}).addTo(trackLayer);
+    for(let i=2;i<latlngs.length;i++){
+      const c=segColor(i);
+      if(c!==curC){ flush(i-1,curC); runStart=i-1; curC=c; }
+    }
+    flush(latlngs.length-1,curC);
+  } else {
+    L.polyline(latlngs,{color:'#4ca6ff',weight:4,opacity:.9}).addTo(trackLayer);
+  }
+  // rest-stop markers (red dots) with a duration tooltip on hover
+  if(A.stops) for(const s of A.stops){
+    L.circleMarker([s.lat,s.lon],{radius:9,color:'#fff',weight:1.5,
+      fillColor:'#ff5050',fillOpacity:1})
+      .bindTooltip('Rest '+fmtDur(s.dur),{direction:'top',offset:[0,-6]})
+      .addTo(trackLayer);
+  }
+  // the live position marker is non-interactive so it never blocks the rest tooltips beneath it
+  marker=L.circleMarker(latlngs[0],{radius:6,color:'#fff',weight:2,
+    fillColor:'#4ca6ff',fillOpacity:1,interactive:false}).addTo(trackLayer);
+  if(fit) map.fitBounds(L.latLngBounds(latlngs).pad(.1));
+  // hover from map -> charts (throttled via setHover)
+  map.off('mousemove').on('mousemove',e=>{
+    let best=0,bd=Infinity;
+    for(let i=0;i<Dd.lat.length;i++){
+      const d=Math.abs(Dd.lat[i]-e.latlng.lat)+Math.abs(Dd.lon[i]-e.latlng.lng);
+      if(d<bd){bd=d;best=i;}
+    }
+    setHover(best);
+  });
+  setTimeout(()=>map.invalidateSize(),50);
+}
+
+/* ============================ Hover sync (throttled) ============================ */
+let pendingIndex=null, hoverRaf=null;
+function setHover(i){
+  if(i==null || i===hoverIndex) return;
+  pendingIndex=i;
+  if(hoverRaf) return;
+  hoverRaf=requestAnimationFrame(()=>{ hoverRaf=null; hoverIndex=pendingIndex; applyHover(hoverIndex); });
+}
+function clearHover(){
+  if(hoverRaf){ cancelAnimationFrame(hoverRaf); hoverRaf=null; }
+  hoverIndex=null; pendingIndex=null; clearOverlays();
+  document.getElementById('readout').innerHTML='<span class="placeholder">Hover any chart or the map to inspect a point…</span>';
+}
+function applyHover(i){
+  const Dd=A.disp; if(!Dd||Dd.dist[i]==null) return;
+  drawOverlays(i);
+  if(marker) marker.setLatLng([Dd.lat[i],Dd.lon[i]]);
+  const parts=[`<span class="ri">Dist <b>${D(Dd.dist[i])}</b> ${unit.dist.u}</span>`];
+  if(A.hasEle) parts.push(`<span class="ri">Elev <b>${E(Dd.ele[i])}</b> ${unit.ele.u}</span>`);
+  if(A.hasEle) parts.push(`<span class="ri">Grade <b>${fmt(Dd.grade[i],1)}</b>%</span>`);
+  if(A.hasTime) parts.push(`<span class="ri">Speed <b>${SP(Dd.speed[i])}</b> ${unit.speed.u}</span>`);
+  if(A.hasTime&&A.hasEle) parts.push(`<span class="ri">Burn rate <b>${fmt(Dd.calRate[i],0)}</b> kcal/hr</span>`);
+  if(A.hasTime&&Dd.time[i]) parts.push(`<span class="ri">Time <b>${Dd.time[i].toLocaleTimeString()}</b></span>`);
+  if(A.hasHR&&Dd.hr[i]!=null) parts.push(`<span class="ri">HR <b>${Math.round(Dd.hr[i])}</b></span>`);
+  document.getElementById('readout').innerHTML=parts.join('');
+}
+
+/* ============================ Cards ============================ */
+function renderCards(){
+  const s=A.stats, c=[];
+  const add=(k,v,hl,cls)=>c.push(`<div class="card ${hl?'hl':''} ${cls||''}"><div class="k">${k}</div><div class="v">${v}</div></div>`);
+  if(A.hasTime&&s.startTime) add('Start', fmtStart(s.startTime), false, 'wide');
+  add('Distance', `${D(s.distance)} <small>${unit.dist.u}</small>`, true);
+  if(A.hasEle){
+    add('Elevation gain', `${E(s.gain)} <small>${unit.ele.u}</small>`, true);
+    add('Elevation loss', `${E(s.loss)} <small>${unit.ele.u}</small>`);
+    add('Max elevation', `${E(s.maxEle)} <small>${unit.ele.u}</small>`);
+    add('Max grade', `${fmt(s.maxGrade,1)}% <small>/ ${fmt(s.minGrade,1)}%</small>`);
+  }
+  if(A.hasTime){
+    add('Total time', hms(s.totalTime));
+    add('Moving time', hms(s.movingTime));
+    add('Stopped time', hms(s.stoppedTime));
+    add('Avg speed', `${SP(s.avgSpeed)} <small>${unit.speed.u}</small>`);
+    add('Avg moving speed', `${SP(s.avgMoveSpeed)} <small>${unit.speed.u}</small>`);
+    add('Max speed', `${SP(s.maxSpeed)} <small>${unit.speed.u}</small>`);
+  }
+  if(A.hasTime&&A.hasEle){
+    add('Calories', `${fmt(s.totCal,0)} <small>kcal</small>`, true);
+    if(s.vam!=null) add('VAM (climb rate)', `${fmt(unit.ele.f(s.vam),0)} <small>${unit.ele.u}/hr</small>`);
+  }
+  if(s.difficulty!=null) add('Difficulty', `${fmt(s.difficulty,0)} <small>${difficultyBand(s.difficulty)}</small>`, true);
+  if(s.naismith!=null) add('Naismith est.', hms(s.naismith));
+  document.getElementById('cards').innerHTML=c.join('');
+}
+
+/* ============================ Messages ============================ */
+function renderMessages(){
+  const m=[];
+  if(!A.hasEle) m.push('<div class="warn">No elevation data in this GPX — elevation, grade, and calorie metrics are unavailable.</div>');
+  if(!A.hasTime) m.push('<div class="warn">No timestamps in this GPX — speed, time, and calorie metrics are unavailable.</div>');
+  document.getElementById('messages').innerHTML=m.join('');
+}
+
+/* ============================ Recompute / render ============================ */
+function recompute(){
+  if(!RAW) return;
+  if(hoverRaf){ cancelAnimationFrame(hoverRaf); hoverRaf=null; }
+  hoverIndex=null; pendingIndex=null;
+  dragSel=null; clearSelectionMap(); hideSelPop();
+  A=analyze(RAW, params);
+  computeColorRanges(); ensureColorModeAvailable();
+  renderMessages(); renderCards(); buildCharts(); buildMap();
+  document.getElementById('exportBtn').disabled=false;
+  document.getElementById('readout').innerHTML='<span class="placeholder">Hover any chart or the map to inspect a point…</span>';
+}
+
+/* ============================ Param inputs ============================ */
+function syncInputsFromParams(){
+  const u=unit;
+  document.getElementById('p_gpsOutlierK').value=params.gpsOutlierK;
+  document.getElementById('p_eleThresh').value=Math.round(u.ele.f(params.eleThresh));
+  document.getElementById('p_eleSmooth').value=params.eleSmooth;
+  document.getElementById('p_distThresh').value=Math.round(u.distShort.f(params.distThresh));
+  document.getElementById('p_smooth').value=params.smooth;
+  document.getElementById('p_moveThresh').value=(+u.speed.f(params.moveThresh).toFixed(1));
+  document.getElementById('p_stopThresh').value=(+(params.stopThresh/60).toFixed(2));
+  document.getElementById('p_model').value=params.model;
+  document.getElementById('p_weight').value=Math.round(u.wt.f(params.weight));
+  document.getElementById('p_pack').value=Math.round(u.wt.f(params.pack));
+  document.getElementById('p_eta').value=params.eta;
+  // unit labels
+  document.getElementById('u_ele').textContent=u.ele.u;
+  document.getElementById('u_dist').textContent=u.distShort.u;
+  document.getElementById('u_speed').textContent=u.speed.u;
+  document.getElementById('u_wt').textContent=u.wt.u;
+  document.getElementById('u_wt2').textContent=u.wt.u;
+  document.getElementById('etaField').classList.toggle('hidden', params.model!=='pandolf');
+}
+
+function readParamsFromInputs(){
+  const u=unit;
+  params.gpsOutlierK = Math.max(0, parseFloat(document.getElementById('p_gpsOutlierK').value)||0);
+  params.eleThresh = u.eleToM(parseFloat(document.getElementById('p_eleThresh').value)||0);
+  params.eleSmooth = Math.max(0, parseInt(document.getElementById('p_eleSmooth').value)||0);
+  params.distThresh = u.distToM(parseFloat(document.getElementById('p_distThresh').value)||0);
+  params.smooth = Math.max(1, parseInt(document.getElementById('p_smooth').value)||1);
+  params.moveThresh = u.speedToMs(parseFloat(document.getElementById('p_moveThresh').value)||0);
+  params.stopThresh = Math.max(0,(parseFloat(document.getElementById('p_stopThresh').value)||0)*60);
+  params.model = document.getElementById('p_model').value;
+  params.weight = u.wt.toM(parseFloat(document.getElementById('p_weight').value)||1);
+  params.pack = u.wt.toM(parseFloat(document.getElementById('p_pack').value)||0);
+  params.eta = parseFloat(document.getElementById('p_eta').value)||1.2;
+}
+function updateEtaVisibility(){
+  document.getElementById('etaField').classList.toggle('hidden',
+    document.getElementById('p_model').value!=='pandolf');
+}
+// Recompute when the user commits an edit: blur after a change, Enter, spinner arrows, or select.
+let lastSig=null;
+function paramSig(){
+  return [params.gpsOutlierK,params.eleThresh,params.eleSmooth,params.distThresh,params.smooth,params.moveThresh,params.stopThresh,
+    params.model,params.weight,params.pack,params.eta].join('|');
+}
+function commitParams(){
+  updateEtaVisibility();
+  if(!RAW) return;
+  readParamsFromInputs();
+  const sig=paramSig();
+  if(sig===lastSig) return;   // nothing actually changed — skip redundant recompute
+  lastSig=sig; recompute();
+}
+['p_gpsOutlierK','p_eleThresh','p_eleSmooth','p_distThresh','p_smooth','p_moveThresh','p_stopThresh','p_model','p_weight','p_pack','p_eta']
+  .forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('change', commitParams);                       // blur-with-change, spinner, select
+    el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); commitParams(); } });
+  });
+
+/* ============================ Units toggle ============================ */
+document.getElementById('unitToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b || U[b.dataset.u]===unit) return;
+  readParamsFromInputs();        // capture any edits in the old unit first
+  unit = U[b.dataset.u];
+  [...document.querySelectorAll('#unitToggle button')].forEach(x=>x.classList.toggle('on',x===b));
+  syncInputsFromParams();        // rewrite fields in the new unit
+  recompute();
+  lastSig=paramSig();
+});
+
+/* ============================ Colour-mode toggle ============================ */
+document.getElementById('colorToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b||b.disabled||b.dataset.c===colorMode) return;
+  colorMode=b.dataset.c;
+  [...document.querySelectorAll('#colorToggle button')].forEach(x=>x.classList.toggle('on',x===b));
+  if(!A) return;
+  buildCharts(); buildMap(false);   // recolour profile + map (keep current map view)
+});
+
+/* ============================ File loading ============================ */
+function loadText(text, name){
+  try{
+    RAW=parseGPX(text);
+    document.getElementById('fileName').textContent=name||'loaded';
+    document.getElementById('dropzone').classList.add('hidden');
+    document.getElementById('results').classList.remove('hidden');
+    readParamsFromInputs();
+    recompute();
+    lastSig=paramSig();
+  }catch(err){
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('dropzone').classList.add('hidden');
+    document.getElementById('messages').innerHTML='<div class="err">'+err.message+'</div>';
+    document.getElementById('cards').innerHTML='';
+  }
+}
+function handleFile(f){ const r=new FileReader(); r.onload=()=>loadText(r.result,f.name); r.readAsText(f); }
+
+document.getElementById('loadBtn').onclick=()=>document.getElementById('file').click();
+document.getElementById('file').addEventListener('change',e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
+const dz=document.getElementById('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('hover');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('hover');}));
+dz.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>e.preventDefault());
+
+/* ============================ Multi-file browser ============================ */
+const browseModal=document.getElementById('browseModal');
+let browseRows=[];
+let browseSparkRanges=null;
+let browseSort={key:'start', asc:true};
+const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtTableDate=(d)=> d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})
+  +' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+
+function openBrowse(){ browseModal.classList.remove('hidden'); }
+function closeBrowse(){ browseModal.classList.add('hidden'); }
+
+document.getElementById('browseBtn').onclick=openBrowse;
+document.getElementById('browseClose').onclick=closeBrowse;
+browseModal.addEventListener('click',e=>{ if(e.target===browseModal) closeBrowse(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !browseModal.classList.contains('hidden')) closeBrowse(); });
+document.getElementById('pickDir').onclick=()=>document.getElementById('dirInput').click();
+
+document.getElementById('dirInput').addEventListener('change',async e=>{
+  const files=[...e.target.files].filter(f=>/\.gpx$/i.test(f.name));
+  const status=document.getElementById('browseStatus');
+  e.target.value='';                                   // allow re-selecting the same folder
+  if(!files.length){ browseRows=[]; renderBrowseTable(); status.textContent='No .gpx files found in that folder.'; return; }
+  status.textContent='Processing '+files.length+' file'+(files.length>1?'s':'')+'…';
+  readParamsFromInputs();                              // summarize with the current processing settings
+  browseRows=[];
+  for(const f of files){
+    try{
+      const text=await f.text();
+      const a=analyze(parseGPX(text), params), s=a.stats;
+      browseRows.push({name:f.name, text, start:s.startTime?s.startTime.getTime():null, startDate:s.startTime,
+        dist:s.distance, gain:a.hasEle?s.gain:null, time:a.hasTime?s.totalTime:null,
+        movtime:a.hasTime?s.movingTime:null, speed:a.hasTime?s.avgSpeed:null,
+        movspeed:a.hasTime?s.avgMoveSpeed:null, cal:(a.hasTime&&a.hasEle)?s.totCal:null, err:null,
+        spark: a.hasEle? {dist:a.disp.dist, ele:relativeEle(a.disp.eleSm), speed:a.hasTime?a.disp.speed:null} : null});
+    }catch(err){
+      browseRows.push({name:f.name, text:null, start:null, startDate:null, dist:null, gain:null,
+        time:null, movtime:null, speed:null, movspeed:null, cal:null, err:err.message, spark:null});
+    }
+  }
+  status.textContent=files.length+' file'+(files.length>1?'s':'')+' loaded — click a header to sort, double-click a row to open.';
+  browseSparkRanges = computeSparkRanges(browseRows);
+  sortBrowse(); renderBrowseTable();
+});
+
+// Rebase an elevation series to the first valid sample so the mini profile reflects
+// gain/loss shape, not the hike's absolute starting altitude.
+function relativeEle(arr){
+  let base=null;
+  for(const e of arr){ if(e!=null&&isFinite(e)){ base=e; break; } }
+  if(base==null) return arr.map(_=>null);
+  return arr.map(e=> (e==null||!isFinite(e))? null : e-base);
+}
+
+// Shared distance/elevation/speed scales so every mini profile in the table lines up
+// and the speed colour mapping is consistent across rows (not re-normalized per hike).
+function computeSparkRanges(rows){
+  let distHi=0, eleLo=null, eleHi=null, spLo=null, spHi=null;
+  for(const r of rows){
+    if(r.err || !r.spark) continue;
+    const sp=r.spark;
+    if(sp.dist.length) distHi=Math.max(distHi, sp.dist[sp.dist.length-1]);
+    for(const e of sp.ele){
+      if(e==null||!isFinite(e)) continue;
+      eleLo = eleLo==null? e : Math.min(eleLo,e);
+      eleHi = eleHi==null? e : Math.max(eleHi,e);
+    }
+    if(sp.speed){
+      for(const v of sp.speed){
+        if(v==null||!isFinite(v)) continue;
+        spLo = spLo==null? v : Math.min(spLo,v);
+        spHi = spHi==null? v : Math.max(spHi,v);
+      }
+    }
+  }
+  if(eleLo==null){ eleLo=0; eleHi=1; }
+  if(eleHi-eleLo<1) eleHi=eleLo+1;
+  if(spLo==null){ spLo=0; spHi=1; }
+  return {distHi: distHi||1, eleLo, eleHi, spLo, spHi};
+}
+
+const SPARK_DPR = window.devicePixelRatio||1;
+function drawSparkline(canvas, row, ranges){
+  const cssW=180, cssH=56;
+  canvas.width=cssW*SPARK_DPR; canvas.height=cssH*SPARK_DPR;
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(SPARK_DPR,0,0,SPARK_DPR,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+  const sp=row.spark;
+  if(!sp || !sp.ele || !sp.ele.length) return;
+  const pad=3;
+  const xScale = d=> pad + (cssW-2*pad) * (d/ranges.distHi);
+  const yScale = e=> cssH-pad - (cssH-2*pad) * ((e-ranges.eleLo)/(ranges.eleHi-ranges.eleLo));
+  const hasSpeed = !!sp.speed;
+  ctx.lineWidth=1.5; ctx.lineCap='round'; ctx.lineJoin='round';
+  for(let i=1;i<sp.ele.length;i++){
+    const e0=sp.ele[i-1], e1=sp.ele[i];
+    if(e0==null||e1==null||!isFinite(e0)||!isFinite(e1)) continue;
+    ctx.strokeStyle = hasSpeed ? speedColor(sp.speed[i]||0, ranges.spLo, ranges.spHi) : '#4ca6ff';
+    ctx.beginPath();
+    ctx.moveTo(xScale(sp.dist[i-1]), yScale(e0));
+    ctx.lineTo(xScale(sp.dist[i]), yScale(e1));
+    ctx.stroke();
+  }
+}
+
+function sortBrowse(){
+  const {key,asc}=browseSort, dir=asc?1:-1;
+  browseRows.sort((a,b)=>{
+    if(key==='name') return a.name.localeCompare(b.name)*dir;
+    const va=a[key], vb=b[key], na=va==null, nb=vb==null;   // blanks always sort last
+    if(na&&nb) return 0; if(na) return 1; if(nb) return -1;
+    return (va-vb)*dir;
+  });
+}
+
+function renderBrowseTable(){
+  const tb=document.querySelector('#browseTable tbody');
+  tb.innerHTML=browseRows.map((r,i)=>{
+    if(r.err) return `<tr data-i="${i}"><td>${esc(r.name)}</td><td colspan="9" class="cerr">${esc(r.err)}</td></tr>`;
+    return `<tr data-i="${i}">`
+      +`<td>${esc(r.name)}</td>`
+      +`<td class="spark">${r.spark?`<canvas class="spark-canvas" data-i="${i}"></canvas>`:'<span class="spark-empty">No elevation data</span>'}</td>`
+      +`<td>${r.startDate?fmtTableDate(r.startDate):'—'}</td>`
+      +`<td class="num">${r.dist!=null?D(r.dist)+' '+unit.dist.u:'—'}</td>`
+      +`<td class="num">${r.gain!=null?E(r.gain)+' '+unit.ele.u:'—'}</td>`
+      +`<td class="num">${r.time!=null?hms(r.time):'—'}</td>`
+      +`<td class="num">${r.movtime!=null?hms(r.movtime):'—'}</td>`
+      +`<td class="num">${r.speed!=null?SP(r.speed)+' '+unit.speed.u:'—'}</td>`
+      +`<td class="num">${r.movspeed!=null?SP(r.movspeed)+' '+unit.speed.u:'—'}</td>`
+      +`<td class="num">${r.cal!=null?fmt(r.cal,0)+' kcal':'—'}</td>`
+      +`</tr>`;
+  }).join('');
+  if(browseSparkRanges){
+    tb.querySelectorAll('canvas.spark-canvas').forEach(cv=>{
+      drawSparkline(cv, browseRows[+cv.dataset.i], browseSparkRanges);
+    });
+  }
+  document.querySelectorAll('#browseTable thead th').forEach(th=>{
+    const a=th.querySelector('.arr');
+    if(a) a.textContent = th.dataset.key===browseSort.key ? (browseSort.asc?'▲':'▼') : '';
+  });
+  renderBrowseTotals();
+}
+
+function renderBrowseTotals(){
+  const tf=document.querySelector('#browseTable tfoot');
+  const rows=browseRows.filter(r=>!r.err);
+  if(!rows.length){ tf.innerHTML=''; return; }
+  const sum=k=>{ const v=rows.filter(r=>r[k]!=null); return v.length? v.reduce((a,r)=>a+r[k],0):null; };
+  const avg=k=>{ const v=rows.filter(r=>r[k]!=null); return v.length? v.reduce((a,r)=>a+r[k],0)/v.length:null; };
+  const dist=sum('dist'), gain=sum('gain'), time=sum('time'), movtime=sum('movtime'),
+        cal=sum('cal'), speed=avg('speed'), movspeed=avg('movspeed');
+  tf.innerHTML=`<tr>`
+    +`<td>Totals (${rows.length})</td>`
+    +`<td></td>`
+    +`<td></td>`
+    +`<td class="num">${dist!=null?D(dist)+' '+unit.dist.u:'—'}</td>`
+    +`<td class="num">${gain!=null?E(gain)+' '+unit.ele.u:'—'}</td>`
+    +`<td class="num">${time!=null?hms(time):'—'}</td>`
+    +`<td class="num">${movtime!=null?hms(movtime):'—'}</td>`
+    +`<td class="num">${speed!=null?SP(speed)+' '+unit.speed.u:'—'}</td>`
+    +`<td class="num">${movspeed!=null?SP(movspeed)+' '+unit.speed.u:'—'}</td>`
+    +`<td class="num">${cal!=null?fmt(cal,0)+' kcal':'—'}</td>`
+    +`</tr>`;
+}
+
+document.querySelectorAll('#browseTable thead th').forEach(th=>{
+  th.onclick=()=>{
+    const k=th.dataset.key; if(!k) return;
+    if(browseSort.key===k) browseSort.asc=!browseSort.asc; else { browseSort.key=k; browseSort.asc=true; }
+    sortBrowse(); renderBrowseTable();
+  };
+});
+
+document.querySelector('#browseTable tbody').addEventListener('dblclick',e=>{
+  const tr=e.target.closest('tr'); if(!tr) return;
+  const r=browseRows[+tr.dataset.i]; if(!r||!r.text) return;
+  closeBrowse();
+  loadText(r.text, r.name);
+});
+
+/* ============================ Sidebar toggle ============================ */
+(function(){
+  const aside=document.getElementById('sidebar');
+  const btn=document.getElementById('sideToggle');
+  const arrow=btn.querySelector('.st-arrow');
+  function setSide(open){
+    aside.classList.toggle('collapsed',!open);
+    arrow.textContent=open?'‹':'›';
+  }
+  setSide(false);
+  btn.addEventListener('click',()=>setSide(aside.classList.contains('collapsed')));
+})();
+
+/* ============================ CSV export ============================ */
+document.getElementById('exportBtn').onclick=()=>{
+  if(!A) return;
+  const head=['dist_'+unit.dist.u,'ele_'+unit.ele.u,'grade_pct','speed_'+unit.speed.u,'cum_kcal','time','lat','lon'];
+  const lines=[head.join(',')];
+  A.clean.forEach((c,i)=>lines.push([
+    unit.dist.f(c.dist).toFixed(4),
+    c.ele!=null?unit.ele.f(c.ele).toFixed(1):'',
+    A.hasEle?A.grade[i].toFixed(2):'',
+    A.hasTime?unit.speed.f(A.speed[i]).toFixed(2):'',
+    (A.hasTime&&A.hasEle)?A.cumCal[i].toFixed(1):'',
+    c.time?c.time.toISOString():'', c.lat.toFixed(6), c.lon.toFixed(6)
+  ].join(',')));
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='openhikestats.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* ============================ Range-drag selection ============================ */
+document.addEventListener('mousemove',e=>{
+  if(!dragSel) return;
+  const c=dragSel.anchorChart;
+  const rect=c.canvas.getBoundingClientRect();
+  const px=Math.max(c.chartArea.left,Math.min(c.chartArea.right,e.clientX-rect.left));
+  dragSel.endDist=c.scales.x.getValueForPixel(px);
+  dragSel.clientX=e.clientX; dragSel.clientY=e.clientY;
+  drawOverlays(hoverIndex);
+  updateSelectionMap();
+  updateSelPop();
+});
+document.addEventListener('mouseup',()=>{
+  if(!dragSel) return;
+  dragSel=null;
+  drawOverlays(hoverIndex);
+  clearSelectionMap();
+  hideSelPop();
+});
+function updateSelectionMap(){
+  clearSelectionMap();
+  if(!map||!A||!dragSel) return;
+  const lo=Math.min(dragSel.startDist,dragSel.endDist);
+  const hi=Math.max(dragSel.startDist,dragSel.endDist);
+  if(hi-lo<1) return;
+  const pts=[];
+  A.disp.dist.forEach((d,i)=>{ if(d>=lo&&d<=hi) pts.push([A.disp.lat[i],A.disp.lon[i]]); });
+  if(pts.length<2) return;
+  selMapLayer=L.polyline(pts,{color:'#000000',weight:5,opacity:.9}).addTo(map);
+}
+function clearSelectionMap(){
+  if(selMapLayer){ selMapLayer.remove(); selMapLayer=null; }
+}
+let selPop=null;
+function showSelPop(x,y,text){
+  if(!selPop){ selPop=document.createElement('div');
+    selPop.style.cssText='position:fixed;z-index:1001;pointer-events:none;background:#1a2129;'+
+      'color:#e6edf3;font:600 12px system-ui,sans-serif;padding:4px 9px;border-radius:5px;'+
+      'border:1px solid #4ca6ff;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,.4)';
+    document.body.appendChild(selPop); }
+  selPop.textContent=text;
+  selPop.style.display='block';
+  const w=selPop.offsetWidth;
+  const left=(x+14+w>window.innerWidth) ? x-14-w : x+14;
+  selPop.style.left=left+'px'; selPop.style.top=(y-10)+'px';
+}
+function hideSelPop(){ if(selPop) selPop.style.display='none'; }
+function updateSelPop(){
+  if(!dragSel){ hideSelPop(); return; }
+  const span=Math.abs(dragSel.endDist-dragSel.startDist);
+  showSelPop(dragSel.clientX,dragSel.clientY,
+    fmt(unit.dist.f(span),unit.dist.d)+' '+unit.dist.u);
+}
+
+/* ============================ Map resize ============================ */
+(()=>{
+  const handle=document.getElementById('mapResizeHandle');
+  const mapEl=document.getElementById('map');
+  handle.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    const startY=e.clientY, startH=mapEl.offsetHeight;
+    const onMove=e=>{
+      mapEl.style.height=Math.max(120,Math.min(900,startH+(e.clientY-startY)))+'px';
+      if(map) map.invalidateSize();
+    };
+    const onUp=()=>{
+      document.removeEventListener('mousemove',onMove);
+      document.removeEventListener('mouseup',onUp);
+    };
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
+})();
+
+/* ============================ Init ============================ */
+syncInputsFromParams();
+</script>
+</body>
+</html>
