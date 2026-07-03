@@ -26,7 +26,7 @@
   .btn.primary{background:var(--accent);color:#06243f;border-color:var(--accent);font-weight:600}
   .toggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
   .toggle button{background:var(--panel2);border:0;color:var(--muted);padding:7px 12px;cursor:pointer}
-  .toggle button.on{background:var(--accent);color:#06243f;font-weight:600}
+  .toggle button.on{background:#4a5568;color:#e6edf3;font-weight:600}
   .layout{display:flex;align-items:flex-start;gap:0}
   aside{width:280px;flex:0 0 auto;background:var(--panel);border-right:1px solid var(--line);
     padding:14px 14px 80px;height:calc(100vh - 56px);overflow:auto;position:sticky;top:0;
@@ -107,7 +107,7 @@
   .muted{color:var(--muted)}
   /* multi-file browser modal */
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:2000;
-    display:flex;align-items:center;justify-content:center;padding:30px}
+    display:flex;align-items:flex-start;justify-content:center;padding:5vh 30px 30px}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;
     box-shadow:var(--shadow);width:min(1040px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
   .modal .mhead{display:flex;align-items:center;justify-content:space-between;
@@ -118,9 +118,11 @@
   .mclose:hover{color:var(--text)}
   .modal .mtools{display:flex;align-items:center;gap:14px;padding:14px 18px}
   .modal .mfoot{padding:10px 18px;border-top:1px solid var(--line);font-size:12px}
-  .tablewrap{overflow:auto;flex:1;margin:0 18px;border:1px solid var(--line);border-radius:8px}
+  .tablewrap{overflow:auto;flex:1;margin:0 18px;border:1px solid var(--line);border-radius:8px;overscroll-behavior:contain}
   .gtable{border-collapse:collapse;width:100%;font-size:13px}
   .gtable th,.gtable td{padding:8px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+  .gtable th:first-child,.gtable td:first-child{width:200px;min-width:200px;max-width:200px}
+  .gtable td:first-child{white-space:normal;word-break:break-word}
   .gtable td.num,.gtable th.num{text-align:right;font-variant-numeric:tabular-nums;padding-left:8px;padding-right:8px}
   .gtable thead th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;
     color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;z-index:1;
@@ -136,6 +138,34 @@
   .gtable .spark-empty{color:#6b7a8a;font-size:11px;width:180px;display:block;white-space:normal}
   .gtable tfoot td{position:sticky;bottom:0;background:var(--panel2);border-top:1px solid var(--line);
     font-weight:600;color:var(--text)}
+  /* calendar view */
+  .calwrap{overflow:auto;flex:1;margin:0 18px;display:flex;flex-direction:column;min-height:0;overscroll-behavior:contain}
+  .bcal-nav{display:flex;align-items:center;gap:8px;padding:10px 0;flex:0 0 auto}
+  .bcal-title{flex:1;text-align:center}
+  .bcal-title-month{font-size:14px;font-weight:600}
+  .bcal-month-stats{font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:.1px}
+  .bcal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid var(--line);border-top:1px solid var(--line);flex:1}
+  .bcal-dayname{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:5px 2px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel2);position:sticky;top:0;z-index:2}
+  .bcal-cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px 5px;min-height:96px;box-sizing:border-box;vertical-align:top}
+  .bcal-pad{background:rgba(0,0,0,.15)}
+  .bcal-dnum{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:3px}
+  .bcal-spark{display:block;width:100%;height:38px}
+  .bcal-stats{font-size:11px;font-variant-numeric:tabular-nums;line-height:1.5;margin-top:3px;color:var(--text)}
+  .bcal-nhikes{font-size:10px;color:var(--muted);margin-top:1px}
+  .bcal-cycle{display:flex;align-items:center;justify-content:flex-end;gap:3px;margin-bottom:2px}
+  .bcal-cyc-btn{background:none;border:1px solid var(--line);border-radius:3px;color:var(--muted);font-size:11px;padding:0 4px;line-height:14px;cursor:pointer;flex:0 0 auto}
+  .bcal-cyc-btn:hover{color:var(--text);background:var(--panel2)}
+  .bcal-cyc-lbl{font-size:10px;color:var(--muted);min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+  /* Route planner */
+  #planMapDiv .leaflet-container{height:100%;background:var(--panel2)}
+  #planNames{display:none;flex-wrap:wrap;gap:4px 3px;align-items:center;padding:2px 0;min-height:0;flex:0 0 auto}
+  .tnpill{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px 9px;font-size:11px;color:var(--fg);white-space:nowrap}
+  .tnsep{color:var(--muted);font-size:10px;padding:0 1px;line-height:1}
+  #planColorbar{position:absolute;top:6px;right:6px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;gap:6px;z-index:5}
+  #planColorbar .cap{font-size:10px}
+  #planColorbar .sw{width:30px}
+  #planColorbar .sw i{height:7px}
+  #planColorbar .sw span{font-size:9px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -143,8 +173,9 @@
   <h1>Open<span class="alt">Hike</span>Stats</h1>
   <input type="file" id="file" accept=".gpx,application/gpx+xml" class="hidden">
   <input type="file" id="dirInput" webkitdirectory directory multiple class="hidden">
-  <button class="btn" id="loadBtn">Load GPX…</button>
-  <button class="btn" id="browseBtn">Browse multiple GPX…</button>
+  <button class="btn primary" id="loadBtn">Load GPX…</button>
+  <button class="btn primary" id="browseBtn">Browse multiple GPX…</button>
+  <button class="btn primary" id="planBtn">Plan Route…</button>
   <span id="fileName" class="grow" style="color:var(--muted)">No file loaded</span>
   <div class="toggle" id="unitToggle">
     <button data-u="imperial" class="on">Imperial</button>
@@ -286,6 +317,10 @@
     <div class="mtools">
       <button class="btn primary" id="pickDir">Select directory…</button>
       <span id="browseStatus" class="muted">Choose a folder — every .gpx file in it will be summarized below.</span>
+      <div class="toggle" style="margin-left:auto">
+        <button data-v="table" id="browseViewTable" class="on">Table</button>
+        <button data-v="calendar" id="browseViewCal">Calendar</button>
+      </div>
     </div>
     <div class="tablewrap">
       <table class="gtable" id="browseTable">
@@ -305,7 +340,37 @@
         <tfoot></tfoot>
       </table>
     </div>
-    <div class="mfoot muted">Double-click a row to open that hike in the main view.</div>
+    <div id="calWrap" class="calwrap hidden"></div>
+    <div class="mfoot muted" id="browseFooter">Double-click a row to open that hike in the main view.</div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="planModal">
+  <div class="modal" style="width:min(1180px,96vw);height:88vh">
+    <div class="mhead">
+      <strong>Route Planner</strong>
+      <span id="planStats" style="font-size:12px;color:var(--muted);margin-left:16px"></span>
+      <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
+        <button class="btn" id="planUndo" disabled>Undo</button>
+        <button class="btn" id="planClear" disabled>Clear</button>
+        <button class="btn" id="planExport" disabled>Export GPX</button>
+        <button class="mclose" id="planClose">&times;</button>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;min-height:0;padding:12px 18px;gap:10px">
+      <div id="planMapDiv" style="flex:0 0 64%;border-radius:8px;overflow:hidden;border:1px solid var(--line)"></div>
+      <div id="planNames"></div>
+      <div style="flex:1;min-height:0;position:relative">
+        <canvas id="planEleCanvas" style="width:100%;height:100%"></canvas>
+        <div id="planChartHint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;pointer-events:none">
+          Click the map to set a start point, then click again to trace a route
+        </div>
+        <div class="colorbar hidden" id="planColorbar">
+          <span class="cap">Grade (%)</span>
+          <div class="sws" id="planCbSws"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -339,6 +404,8 @@ const fmtDur=(s)=>{ s=Math.round(s); const m=Math.floor(s/60), sec=s%60;
   return m? (sec? m+'m '+sec+'s' : m+'m') : sec+'s'; };
 const fmtClock=(s)=>{ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   return h+':'+String(m).padStart(2,'0'); };
+const fmtDurPop=(s)=>{ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  if(h>0&&m>0) return h+'h '+m+'min'; if(h>0) return h+'h'; return m+'min'; };
 const fmtStart=(d)=>{
   const date=d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   const time=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
@@ -718,6 +785,22 @@ let map=null, trackLayer=null, marker=null, selMapLayer=null;
 let dragSel=null;
 let hoverIndex=null;
 let overlays=[]; // {chart, canvas, ctx} — crosshair layer drawn on top of each chart
+
+/* ============================ Route planner state ============================ */
+const TRAIL_PAL=['#e84393','#3b82f6','#22c55e','#f59e0b','#a855f7','#06b6d4','#ef4444','#84cc16','#f97316','#14b8a6','#ec4899','#6366f1'];
+let planNameColorMap={};
+function getTrailColor(name){
+  if(!name) return '#1a1a1a';
+  if(!planNameColorMap[name])
+    planNameColorMap[name]=TRAIL_PAL[Object.keys(planNameColorMap).length%TRAIL_PAL.length];
+  return planNameColorMap[name];
+}
+let planMap=null, planWaypoints=[], planSegments=[], planSegPolylines=[];
+let planPreviewPoly=null, planStartMarker=null, planCommitting=false;
+let planAbort=null, planMoveTimer=null;
+let planTotalDist=0, planTotalGain=0;
+let planChartInst=null;
+let planChartGrades=[], planGradeLo=0, planGradeHi=0;
 
 if(window.Chart){
   Chart.defaults.color='#90a0b0'; Chart.defaults.font.family='system-ui';
@@ -1124,9 +1207,9 @@ function renderCards(){
     add('Max grade', `${fmt(s.maxGrade,1)}% <small>/ ${fmt(s.minGrade,1)}%</small>`);
   }
   if(A.hasTime){
-    add('Total time', hms(s.totalTime));
-    add('Moving time', hms(s.movingTime));
-    add('Stopped time', hms(s.stoppedTime));
+    add('Total time', fmtDurPop(s.totalTime));
+    add('Moving time', fmtDurPop(s.movingTime));
+    add('Stopped time', fmtDurPop(s.stoppedTime));
     add('Avg speed', `${SP(s.avgSpeed)} <small>${unit.speed.u}</small>`);
     add('Avg moving speed', `${SP(s.avgMoveSpeed)} <small>${unit.speed.u}</small>`);
     add('Max speed', `${SP(s.maxSpeed)} <small>${unit.speed.u}</small>`);
@@ -1136,7 +1219,7 @@ function renderCards(){
     if(s.vam!=null) add('VAM (climb rate)', `${fmt(unit.ele.f(s.vam),0)} <small>${unit.ele.u}/hr</small>`);
   }
   if(s.difficulty!=null) add('Difficulty', `${fmt(s.difficulty,0)} <small>${difficultyBand(s.difficulty)}</small>`, true);
-  if(s.naismith!=null) add('Naismith est.', hms(s.naismith));
+  if(s.naismith!=null) add('Naismith est.', fmtDurPop(s.naismith));
   document.getElementById('cards').innerHTML=c.join('');
 }
 
@@ -1247,7 +1330,7 @@ document.getElementById('colorToggle').addEventListener('click',e=>{
 function loadText(text, name){
   try{
     RAW=parseGPX(text);
-    document.getElementById('fileName').textContent=name||'loaded';
+    document.getElementById('fileName').textContent=stripExt(name)||'loaded';
     document.getElementById('dropzone').classList.add('hidden');
     document.getElementById('results').classList.remove('hidden');
     readParamsFromInputs();
@@ -1276,6 +1359,9 @@ const browseModal=document.getElementById('browseModal');
 let browseRows=[];
 let browseSparkRanges=null;
 let browseSort={key:'start', asc:true};
+let browseView='table';
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+let calDayIdx={};
 const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmtTableDate=(d)=> d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})
   +' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
@@ -1286,6 +1372,7 @@ function closeBrowse(){ browseModal.classList.add('hidden'); }
 document.getElementById('browseBtn').onclick=openBrowse;
 document.getElementById('browseClose').onclick=closeBrowse;
 browseModal.addEventListener('click',e=>{ if(e.target===browseModal) closeBrowse(); });
+browseModal.addEventListener('wheel',e=>{ if(!e.target.closest('.tablewrap,.calwrap')) e.preventDefault(); },{passive:false});
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !browseModal.classList.contains('hidden')) closeBrowse(); });
 document.getElementById('pickDir').onclick=()=>document.getElementById('dirInput').click();
 
@@ -1313,7 +1400,12 @@ document.getElementById('dirInput').addEventListener('change',async e=>{
   }
   status.textContent=files.length+' file'+(files.length>1?'s':'')+' loaded — click a header to sort, double-click a row to open.';
   browseSparkRanges = computeSparkRanges(browseRows);
+  calDayIdx={};
+  const _dated=browseRows.filter(r=>r.startDate&&!r.err);
+  if(_dated.length){ const _e=_dated.reduce((a,b)=>a.start<b.start?a:b);
+    calYear=_e.startDate.getFullYear(); calMonth=_e.startDate.getMonth(); }
   sortBrowse(); renderBrowseTable();
+  if(browseView==='calendar') renderCalendar();
 });
 
 // Rebase an elevation series to the first valid sample so the mini profile reflects
@@ -1353,8 +1445,7 @@ function computeSparkRanges(rows){
 }
 
 const SPARK_DPR = window.devicePixelRatio||1;
-function drawSparkline(canvas, row, ranges){
-  const cssW=180, cssH=56;
+function drawSparkline(canvas, row, ranges, cssW=180, cssH=56){
   canvas.width=cssW*SPARK_DPR; canvas.height=cssH*SPARK_DPR;
   const ctx=canvas.getContext('2d');
   ctx.setTransform(SPARK_DPR,0,0,SPARK_DPR,0,0);
@@ -1377,6 +1468,8 @@ function drawSparkline(canvas, row, ranges){
   }
 }
 
+function stripExt(name){ return name?name.replace(/\.gpx$/i,''):name; }
+
 function sortBrowse(){
   const {key,asc}=browseSort, dir=asc?1:-1;
   browseRows.sort((a,b)=>{
@@ -1390,15 +1483,15 @@ function sortBrowse(){
 function renderBrowseTable(){
   const tb=document.querySelector('#browseTable tbody');
   tb.innerHTML=browseRows.map((r,i)=>{
-    if(r.err) return `<tr data-i="${i}"><td>${esc(r.name)}</td><td colspan="9" class="cerr">${esc(r.err)}</td></tr>`;
+    if(r.err) return `<tr data-i="${i}"><td>${esc(stripExt(r.name))}</td><td colspan="9" class="cerr">${esc(r.err)}</td></tr>`;
     return `<tr data-i="${i}">`
-      +`<td>${esc(r.name)}</td>`
+      +`<td>${esc(stripExt(r.name))}</td>`
       +`<td class="spark">${r.spark?`<canvas class="spark-canvas" data-i="${i}"></canvas>`:'<span class="spark-empty">No elevation data</span>'}</td>`
       +`<td>${r.startDate?fmtTableDate(r.startDate):'—'}</td>`
       +`<td class="num">${r.dist!=null?D(r.dist)+' '+unit.dist.u:'—'}</td>`
       +`<td class="num">${r.gain!=null?E(r.gain)+' '+unit.ele.u:'—'}</td>`
-      +`<td class="num">${r.time!=null?hms(r.time):'—'}</td>`
-      +`<td class="num">${r.movtime!=null?hms(r.movtime):'—'}</td>`
+      +`<td class="num">${r.time!=null?fmtDurPop(r.time):'—'}</td>`
+      +`<td class="num">${r.movtime!=null?fmtDurPop(r.movtime):'—'}</td>`
       +`<td class="num">${r.speed!=null?SP(r.speed)+' '+unit.speed.u:'—'}</td>`
       +`<td class="num">${r.movspeed!=null?SP(r.movspeed)+' '+unit.speed.u:'—'}</td>`
       +`<td class="num">${r.cal!=null?fmt(r.cal,0)+' kcal':'—'}</td>`
@@ -1430,8 +1523,8 @@ function renderBrowseTotals(){
     +`<td></td>`
     +`<td class="num">${dist!=null?D(dist)+' '+unit.dist.u:'—'}</td>`
     +`<td class="num">${gain!=null?E(gain)+' '+unit.ele.u:'—'}</td>`
-    +`<td class="num">${time!=null?hms(time):'—'}</td>`
-    +`<td class="num">${movtime!=null?hms(movtime):'—'}</td>`
+    +`<td class="num">${time!=null?fmtDurPop(time):'—'}</td>`
+    +`<td class="num">${movtime!=null?fmtDurPop(movtime):'—'}</td>`
     +`<td class="num">${speed!=null?SP(speed)+' '+unit.speed.u:'—'}</td>`
     +`<td class="num">${movspeed!=null?SP(movspeed)+' '+unit.speed.u:'—'}</td>`
     +`<td class="num">${cal!=null?fmt(cal,0)+' kcal':'—'}</td>`
@@ -1452,6 +1545,136 @@ document.querySelector('#browseTable tbody').addEventListener('dblclick',e=>{
   closeBrowse();
   loadText(r.text, r.name);
 });
+
+/* ============================ Browse view toggle ============================ */
+function setBrowseView(v){
+  browseView=v;
+  document.getElementById('browseViewTable').classList.toggle('on', v==='table');
+  document.getElementById('browseViewCal').classList.toggle('on', v==='calendar');
+  const tw=document.querySelector('.tablewrap');
+  const cw=document.getElementById('calWrap');
+  tw.classList.toggle('hidden', v==='calendar');
+  cw.classList.toggle('hidden', v==='table');
+  document.getElementById('browseFooter').textContent = v==='calendar'
+    ? 'Double-click a day to open that hike in the main view.'
+    : 'Double-click a row to open that hike in the main view.';
+  if(v==='calendar') renderCalendar();
+}
+
+function renderCalendar(){
+  const wrap=document.getElementById('calWrap');
+  // Build date→rows map keyed YYYY-MM-DD in local time
+  const byDate={};
+  for(const r of browseRows){
+    if(!r.startDate||r.err) continue;
+    const k=r.startDate.getFullYear()+'-'+String(r.startDate.getMonth()+1).padStart(2,'0')+'-'+String(r.startDate.getDate()).padStart(2,'0');
+    (byDate[k]||(byDate[k]=[])).push(r);
+  }
+  const y=calYear, m=calMonth;
+  const monthLabel=new Date(y,m,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const monthHikes=browseRows.filter(r=>r.startDate&&!r.err&&r.startDate.getFullYear()===y&&r.startDate.getMonth()===m);
+  const moDist=monthHikes.reduce((s,r)=>s+(r.dist||0),0);
+  const moTimedHikes=monthHikes.filter(r=>r.time!=null);
+  const moTime=moTimedHikes.reduce((s,r)=>s+r.time,0);
+  const moGainHikes=monthHikes.filter(r=>r.gain!=null);
+  const moGain=moGainHikes.reduce((s,r)=>s+r.gain,0);
+  const moCalHikes=monthHikes.filter(r=>r.cal!=null);
+  const moCal=moCalHikes.reduce((s,r)=>s+r.cal,0);
+  const moParts=[];
+  if(monthHikes.length){ moParts.push(D(moDist)+'&nbsp;'+unit.dist.u); }
+  if(moTimedHikes.length){ moParts.push(fmtDurPop(moTime)); }
+  if(moGainHikes.length){ moParts.push(E(moGain)+'&nbsp;'+unit.ele.u+' climbed'); }
+  if(moCalHikes.length){ moParts.push(fmt(moCal,0)+' kcal'); }
+  const monthStatsHtml=moParts.length?`<div class="bcal-month-stats">${moParts.join(' &nbsp;&nbsp;&middot;&nbsp;&nbsp; ')}</div>`:'';
+  const firstDow=new Date(y,m,1).getDay();   // 0=Sun
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Build flat cell list: null for filler, number for real day
+  const cells=[];
+  for(let i=0;i<firstDow;i++) cells.push(null);
+  for(let d=1;d<=daysInMonth;d++) cells.push(d);
+  while(cells.length%7!==0) cells.push(null);
+
+  const cellsHtml=cells.map(d=>{
+    if(d===null) return `<div class="bcal-cell bcal-pad"></div>`;
+    const dk=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hikes=byDate[dk]||[];
+    let inner=`<div class="bcal-dnum">${d}</div>`;
+    if(hikes.length){
+      const activeHi=(calDayIdx[dk]||0)%hikes.length;
+      if(hikes.length>1){
+        inner+=`<div class="bcal-cycle">`
+          +`<button class="bcal-cyc-btn" data-dk="${dk}" data-dir="-1">&#8249;</button>`
+          +`<span class="bcal-cyc-lbl">${activeHi+1}&nbsp;/&nbsp;${hikes.length}</span>`
+          +`<button class="bcal-cyc-btn" data-dk="${dk}" data-dir="1">&#8250;</button>`
+          +`</div>`;
+      }
+      inner+=`<canvas class="bcal-spark" data-dk="${dk}" data-hi="${activeHi}"></canvas>`;
+      const totalDist=hikes.reduce((s,r)=>s+(r.dist||0),0);
+      const timedHikes=hikes.filter(r=>r.time!=null);
+      const totalTime=timedHikes.reduce((s,r)=>s+r.time,0);
+      inner+=`<div class="bcal-stats">${D(totalDist)}&nbsp;${unit.dist.u}`;
+      if(timedHikes.length) inner+=`<br>${fmtDurPop(totalTime)}`;
+      inner+=`</div>`;
+    }
+    return `<div class="bcal-cell${hikes.length?' bcal-has-hike':''}" data-dk="${dk}">${inner}</div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div class="bcal-nav">
+      <button class="btn" id="calPrev">&#8249; Prev</button>
+      <div class="bcal-title"><div class="bcal-title-month">${monthLabel}</div>${monthStatsHtml}</div>
+      <button class="btn" id="calNext">Next &#8250;</button>
+    </div>
+    <div class="bcal-grid">
+      ${dayNames.map(n=>`<div class="bcal-dayname">${n}</div>`).join('')}
+      ${cellsHtml}
+    </div>`;
+
+  // Draw sparklines after layout (offsetWidth is valid since calWrap is visible)
+  wrap.querySelectorAll('canvas.bcal-spark').forEach(cv=>{
+    const hikes=byDate[cv.dataset.dk]||[];
+    const row=hikes[+cv.dataset.hi];
+    if(row&&browseSparkRanges){
+      const w=cv.offsetWidth||100;
+      drawSparkline(cv, row, browseSparkRanges, w, 38);
+    }
+  });
+
+  document.getElementById('calPrev').onclick=()=>{
+    calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar();
+  };
+  document.getElementById('calNext').onclick=()=>{
+    calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar();
+  };
+
+  // Double-click a day cell with exactly one hike to open it
+  wrap.querySelector('.bcal-grid').addEventListener('dblclick',e=>{
+    const cell=e.target.closest('.bcal-cell'); if(!cell) return;
+    const hikes=byDate[cell.dataset.dk]||[];
+    if(hikes.length===1&&hikes[0].text){ closeBrowse(); loadText(hikes[0].text, hikes[0].name); }
+  });
+
+  // Cycle through sparklines for multi-hike days without re-rendering the whole calendar
+  wrap.querySelector('.bcal-grid').addEventListener('click',e=>{
+    const btn=e.target.closest('.bcal-cyc-btn'); if(!btn) return;
+    const dk=btn.dataset.dk;
+    const hikes=byDate[dk]||[]; if(hikes.length<2) return;
+    calDayIdx[dk]=((calDayIdx[dk]||0)+(+btn.dataset.dir)+hikes.length)%hikes.length;
+    const newHi=calDayIdx[dk];
+    const cell=btn.closest('.bcal-cell');
+    cell.querySelector('.bcal-cyc-lbl').innerHTML=(newHi+1)+'&nbsp;/&nbsp;'+hikes.length;
+    const cv=cell.querySelector('canvas.bcal-spark');
+    if(cv&&browseSparkRanges){
+      const w=cv.offsetWidth||100;
+      drawSparkline(cv, hikes[newHi], browseSparkRanges, w, 38);
+    }
+  });
+}
+
+document.getElementById('browseViewTable').onclick=()=>setBrowseView('table');
+document.getElementById('browseViewCal').onclick=()=>setBrowseView('calendar');
 
 /* ============================ Sidebar toggle ============================ */
 (function(){
@@ -1517,14 +1740,48 @@ function updateSelectionMap(){
 function clearSelectionMap(){
   if(selMapLayer){ selMapLayer.remove(); selMapLayer=null; }
 }
+// Linearly interpolate any A.disp array (numbers or Dates) at a given distance value.
+function dispInterpAt(arr, dist){
+  if(!A||!arr) return null;
+  const xs=A.disp.dist;
+  if(!xs.length) return null;
+  if(dist<=xs[0]) return +arr[0];
+  if(dist>=xs[xs.length-1]) return +arr[xs.length-1];
+  let lo=0, hi=xs.length-1;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(xs[mid]<=dist) lo=mid; else hi=mid; }
+  const t=(dist-xs[lo])/(xs[hi]-xs[lo]);
+  const a=arr[lo], b=arr[hi];
+  if(a==null||b==null||!isFinite(+a)||!isFinite(+b)) return null;
+  return +a + t*(+b - +a);
+}
+
+// Cumulative elevation gain (climbed) within a distance selection [lo, hi].
+function selectionClimb(lo, hi){
+  if(!A||!A.hasEle) return null;
+  const dist=A.disp.dist, ele=A.disp.eleSm;
+  let prev=dispInterpAt(A.disp.eleSm,lo);
+  if(prev==null) return null;
+  let gain=0;
+  for(let i=0;i<dist.length;i++){
+    if(dist[i]<=lo) continue;
+    if(dist[i]>=hi) break;
+    const e=ele[i]; if(e==null||!isFinite(e)) continue;
+    if(e>prev) gain+=e-prev;
+    prev=e;
+  }
+  const eHi=dispInterpAt(A.disp.eleSm,hi);
+  if(eHi!=null&&isFinite(eHi)&&eHi>prev) gain+=eHi-prev;
+  return gain;
+}
+
 let selPop=null;
-function showSelPop(x,y,text){
+function showSelPop(x,y,lines){
   if(!selPop){ selPop=document.createElement('div');
     selPop.style.cssText='position:fixed;z-index:1001;pointer-events:none;background:#1a2129;'+
       'color:#e6edf3;font:600 12px system-ui,sans-serif;padding:4px 9px;border-radius:5px;'+
       'border:1px solid #4ca6ff;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,.4)';
     document.body.appendChild(selPop); }
-  selPop.textContent=text;
+  selPop.innerHTML=(Array.isArray(lines)?lines:[''+lines]).join('<br>');
   selPop.style.display='block';
   const w=selPop.offsetWidth;
   const left=(x+14+w>window.innerWidth) ? x-14-w : x+14;
@@ -1533,9 +1790,31 @@ function showSelPop(x,y,text){
 function hideSelPop(){ if(selPop) selPop.style.display='none'; }
 function updateSelPop(){
   if(!dragSel){ hideSelPop(); return; }
-  const span=Math.abs(dragSel.endDist-dragSel.startDist);
-  showSelPop(dragSel.clientX,dragSel.clientY,
-    fmt(unit.dist.f(span),unit.dist.d)+' '+unit.dist.u);
+  const lo=Math.min(dragSel.startDist,dragSel.endDist);
+  const hi=Math.max(dragSel.startDist,dragSel.endDist);
+  const span=hi-lo;
+  const lines=[fmt(unit.dist.f(span),unit.dist.d)+' '+unit.dist.u];
+  if(A){
+    let durSec=null;
+    if(A.hasTime && A.disp.time){
+      const ms0=dispInterpAt(A.disp.time,lo), ms1=dispInterpAt(A.disp.time,hi);
+      if(ms0!=null&&ms1!=null){ durSec=(ms1-ms0)/1000; lines.push(fmtDurPop(durSec)); }
+    }
+    const ac=dragSel.anchorChart;
+    if(ac===chEle && A.hasEle){
+      const e0=dispInterpAt(A.disp.eleSm,lo), e1=dispInterpAt(A.disp.eleSm,hi);
+      if(e0!=null&&e1!=null){ const d=e1-e0;
+        lines.push('change: '+(d>=0?'+':'')+fmt(unit.ele.f(d),0)+' '+unit.ele.u);
+        const cl=selectionClimb(lo,hi);
+        if(cl!=null) lines.push('climbed: '+fmt(unit.ele.f(cl),0)+' '+unit.ele.u); }
+    } else if(ac===chSpd && A.hasTime && durSec>0){
+      lines.push(fmt(unit.speed.f(span/durSec),unit.speed.d)+' '+unit.speed.u+' avg');
+    } else if(ac===chCal && A.hasTime && A.hasEle){
+      const c0=dispInterpAt(A.disp.cumCal,lo), c1=dispInterpAt(A.disp.cumCal,hi);
+      if(c0!=null&&c1!=null) lines.push(fmt(c1-c0,0)+' kcal');
+    }
+  }
+  showSelPop(dragSel.clientX,dragSel.clientY,lines);
 }
 
 /* ============================ Map resize ============================ */
@@ -1557,6 +1836,427 @@ function updateSelPop(){
     document.addEventListener('mouseup',onUp);
   });
 })();
+
+/* ============================ Route Planner ============================ */
+const planModal=document.getElementById('planModal');
+
+function openPlanModal(){
+  planModal.classList.remove('hidden');
+  if(!planMap) initPlanMap();
+  else setTimeout(()=>planMap.invalidateSize(),50);
+}
+function closePlanModal(){
+  planModal.classList.add('hidden');
+  if(planAbort){planAbort.abort();planAbort=null;}
+  clearTimeout(planMoveTimer);
+}
+
+function initPlanMap(){
+  planMap=L.map('planMapDiv',{preferCanvas:true,zoomSnap:0.25});
+  const topoOSM=L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png',
+    {maxZoom:17,attribution:'© <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'}).addTo(planMap);
+  const topoEsri=L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,attribution:'Tiles © Esri'});
+  L.control.layers({'Topo (OpenTopoMap)':topoOSM,'Topographic (Esri)':topoEsri},null,
+    {position:'topright'}).addTo(planMap);
+  if(A&&A.disp&&A.disp.lat.length)
+    planMap.fitBounds(L.latLngBounds(A.disp.lat.map((la,i)=>[la,A.disp.lon[i]])).pad(.3));
+  else planMap.setView([40,-100],4);
+  planMap.on('click',planMapClick);
+  planMap.on('mousemove',planMapMouseMove);
+  setTimeout(()=>planMap.invalidateSize(),50);
+}
+
+function planMapMouseMove(e){
+  if(!planWaypoints.length||planCommitting) return;
+  const from=planWaypoints[planWaypoints.length-1];
+  const to=[e.latlng.lat,e.latlng.lng];
+  // Instant straight-line placeholder
+  if(!planPreviewPoly)
+    planPreviewPoly=L.polyline([from,to],{color:'#4ca6ff',weight:3,dashArray:'8 6',opacity:.85}).addTo(planMap);
+  else planPreviewPoly.setLatLngs([from,to]);
+  clearTimeout(planMoveTimer);
+  planMoveTimer=setTimeout(async()=>{
+    if(planAbort) planAbort.abort();
+    planAbort=new AbortController();
+    try{
+      const result=await fetchPlanRoute(from,to,planAbort.signal);
+      if(result&&planPreviewPoly) planPreviewPoly.setLatLngs(result.coords);
+    }catch(_){}
+  },150);
+}
+
+// Polyline6 decoder for Valhalla responses (precision 1e6, not 1e5)
+function decodePolyline6(enc){
+  const pts=[]; let i=0,lat=0,lon=0;
+  while(i<enc.length){
+    let b,shift=0,result=0;
+    do{b=enc.charCodeAt(i++)-63;result|=(b&0x1f)<<shift;shift+=5;}while(b>=0x20);
+    lat+=result&1?~(result>>1):(result>>1);
+    shift=0;result=0;
+    do{b=enc.charCodeAt(i++)-63;result|=(b&0x1f)<<shift;shift+=5;}while(b>=0x20);
+    lon+=result&1?~(result>>1):(result>>1);
+    pts.push([lat/1e6,lon/1e6]);
+  }
+  return pts;
+}
+
+async function fetchPlanRoute([lat1,lon1],[lat2,lon2],signal){
+  // Valhalla pedestrian routing with access restrictions ignored so any
+  // visible footpath/track on the map can be followed.
+  const body=JSON.stringify({
+    locations:[{lon:lon1,lat:lat1},{lon:lon2,lat:lat2}],
+    costing:'pedestrian',
+    costing_options:{pedestrian:{
+      use_tracks:1,
+      use_living_streets:1,
+      ignore_restrictions:true,
+      ignore_access:true
+    }}
+  });
+  const r=await fetch('https://valhalla1.openstreetmap.de/route',
+    {method:'POST',headers:{'Content-Type':'application/json'},body,signal:signal||undefined});
+  const j=await r.json();
+  if(!j.trip||!j.trip.legs||!j.trip.legs[0]) return null;
+  const leg=j.trip.legs[0];
+  const coords=decodePolyline6(leg.shape);
+  const names=[], spans=[];
+  for(const m of (leg.maneuvers||[])){
+    const n=(m.street_names||[])[0]||null;
+    if(n&&(names.length===0||names[names.length-1]!==n)) names.push(n);
+    if(m.end_shape_index>m.begin_shape_index)
+      spans.push({name:n,start:m.begin_shape_index,end:m.end_shape_index});
+  }
+  return {coords, names, spans};
+}
+
+async function planMapClick(e){
+  if(planCommitting) return;
+  const to=[e.latlng.lat,e.latlng.lng];
+  if(!planWaypoints.length){
+    planWaypoints.push(to);
+    planStartMarker=L.circleMarker(to,
+      {radius:7,color:'#fff',weight:2,fillColor:'#5cd6a0',fillOpacity:1}).addTo(planMap);
+    document.getElementById('planChartHint').style.display='none';
+    updatePlanButtons();
+    return;
+  }
+  planCommitting=true;
+  clearTimeout(planMoveTimer);
+  if(planAbort){planAbort.abort();planAbort=null;}
+  const from=planWaypoints[planWaypoints.length-1];
+  let segCoords, segNames=[], segSpans=[];
+  try{
+    const result=await fetchPlanRoute(from,to);
+    if(result){segCoords=result.coords;segNames=result.names;segSpans=result.spans||[];}
+  }catch(_){}
+  if(!segCoords||!segCoords.length) segCoords=[from,to];
+  const _dc=sparsifyCoords(segCoords,20);
+  const segDist=_dc.reduce((s,c,i)=>
+    i?s+haversine({lat:_dc[i-1][0],lon:_dc[i-1][1]},{lat:c[0],lon:c[1]}):s,0);
+  const segPolys=[];
+  if(segSpans.length){
+    for(const sp of segSpans){
+      const sub=segCoords.slice(sp.start,sp.end+1);
+      if(sub.length<2) continue;
+      segPolys.push(L.polyline(sub,{color:getTrailColor(sp.name),weight:6,opacity:.95}).addTo(planMap));
+    }
+  }
+  if(!segPolys.length)
+    segPolys.push(L.polyline(segCoords,{color:'#1a1a1a',weight:6,opacity:.95}).addTo(planMap));
+  planSegPolylines.push(segPolys);
+  planSegments.push({coords:segCoords,dist:segDist,ele:null,cumStart:planTotalDist,names:segNames});
+  planTotalDist+=segDist;
+  planWaypoints.push(to);
+  if(planPreviewPoly){planPreviewPoly.remove();planPreviewPoly=null;}
+  updatePlanStats();
+  updatePlanButtons();
+  rebuildPlanNames();
+  planCommitting=false;
+  fetchSegmentElevation(planSegments.length-1);
+}
+
+async function fetchSegmentElevation(idx){
+  const seg=planSegments[idx];
+  if(!seg) return;
+  const pts=downsamplePlan(seg.coords,100);
+  const lats=pts.map(c=>c[0]).join(',');
+  const lons=pts.map(c=>c[1]).join(',');
+  let eleErr=null;
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`);
+    const j=await r.json();
+    if(Array.isArray(j.elevation)){
+      seg.ele=movingAvg(j.elevation,15);
+      seg.ele35=movingAvg(j.elevation,35);
+    } else {
+      seg.ele=null; seg.ele35=null;
+      eleErr=j.reason||'Elevation data unavailable';
+    }
+  }catch(_){seg.ele=null;eleErr='Elevation data unavailable';}
+  planTotalGain=planSegments.reduce((s,sg)=>{
+    if(!sg.ele) return s;
+    let gain=0,prev=sg.ele[0];
+    for(let i=1;i<sg.ele.length;i++){if(sg.ele[i]>prev) gain+=sg.ele[i]-prev; prev=sg.ele[i];}
+    return s+gain;
+  },0);
+  updatePlanStats();
+  rebuildPlanChart(eleErr);
+}
+
+function downsamplePlan(coords,max){
+  if(coords.length<=max) return coords;
+  const step=Math.ceil(coords.length/max);
+  const out=[];
+  for(let i=0;i<coords.length;i+=step) out.push(coords[i]);
+  if(out[out.length-1]!==coords[coords.length-1]) out.push(coords[coords.length-1]);
+  return out;
+}
+
+// Drop points closer than minDist metres to the previous kept point.
+// Used for distance calculation so the result matches GPS-track methodology
+// (GPS fixes ~1-10 m apart, connected by straight lines) rather than summing
+// every micro-wiggle in the dense routing geometry.
+function sparsifyCoords(coords, minDist){
+  if(coords.length<2) return coords;
+  const out=[coords[0]];
+  for(let i=1;i<coords.length;i++){
+    const last=out[out.length-1];
+    if(haversine({lat:last[0],lon:last[1]},{lat:coords[i][0],lon:coords[i][1]})>=minDist)
+      out.push(coords[i]);
+  }
+  if(out[out.length-1]!==coords[coords.length-1]) out.push(coords[coords.length-1]);
+  return out;
+}
+
+function rebuildPlanChart(eleErr){
+  const canvas=document.getElementById('planEleCanvas');
+  const hint=document.getElementById('planChartHint');
+  if(!canvas) return;
+  const pts=[];
+  planChartGrades=[];
+  const gradeEle=[]; // w=25 smoothed values used only for grade colour
+  for(const seg of planSegments){
+    if(!seg.ele||!seg.ele.length) continue;
+    const n=seg.ele.length;
+    const e25=seg.ele35||seg.ele;
+    for(let i=0;i<n;i++){
+      const x=seg.cumStart+(n>1?i/(n-1):0)*seg.dist;
+      const y=seg.ele[i]; // w=15: y-axis position
+      if(pts.length>0){
+        const prev=pts[pts.length-1];
+        const dx=x-prev.x;
+        planChartGrades.push(dx>0.1?(e25[i]-gradeEle[gradeEle.length-1])/dx*100:0);
+      } else {
+        planChartGrades.push(0);
+      }
+      pts.push({x,y});
+      gradeEle.push(e25[i]);
+    }
+  }
+  if(!pts.length){
+    if(planChartInst){planChartInst.destroy();planChartInst=null;}
+    if(hint && planSegments.length){
+      hint.textContent=eleErr||'Fetching elevation data…';
+      hint.style.display='flex';
+    }
+    buildPlanColorbar();
+    return;
+  }
+  if(hint) hint.style.display='none';
+  const gVals=planChartGrades.filter(isFinite);
+  planGradeLo=Math.min(...gVals);
+  planGradeHi=Math.max(...gVals);
+  const colorCb=ctx=>gradeColorN(planChartGrades[ctx.p1DataIndex]||0,planGradeLo,planGradeHi);
+  if(planChartInst){
+    planChartInst.data.datasets[0].data=pts;
+    planChartInst.data.datasets[1].data=pts;
+    planChartInst.options.scales.x.max=planTotalDist;
+    planChartInst.update('none');
+  } else {
+    planChartInst=new Chart(canvas,{
+      type:'line',
+      data:{datasets:[
+        // flat fill underneath
+        {data:pts,parsing:false,borderWidth:0,backgroundColor:'rgba(76,166,255,.10)',
+         fill:true,pointRadius:0,tension:.2},
+        // grade-coloured line on top
+        {data:pts,parsing:false,borderWidth:2,fill:false,pointRadius:0,tension:.2,
+         segment:{borderColor:colorCb}}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,
+        events:[],plugins:{legend:{display:false},tooltip:{enabled:false}},
+        scales:{
+          x:{type:'linear',min:0,max:planTotalDist,
+             title:{display:true,text:'Distance ('+unit.dist.u+')'},
+             ticks:{callback:v=>fmt(unit.dist.f(v),unit.dist.d)},
+             grid:{color:'#22303c'}},
+          y:{title:{display:true,text:'Elevation ('+unit.ele.u+')'},
+             ticks:{callback:v=>fmt(unit.ele.f(v),0)},
+             grid:{color:'#22303c'}}
+        }
+      }
+    });
+  }
+  buildPlanColorbar();
+}
+
+function buildPlanColorbar(){
+  const bar=document.getElementById('planColorbar');
+  const sws=document.getElementById('planCbSws');
+  if(!bar||!sws) return;
+  if(!planChartGrades.length){bar.classList.add('hidden');return;}
+  let html='';
+  for(let k=0;k<5;k++){
+    const t=k/4, v=planGradeLo+t*(planGradeHi-planGradeLo);
+    html+=`<div class="sw"><i style="background:${gradeColorN(v,planGradeLo,planGradeHi)}"></i>`
+         +`<span>${fmt(v,0)}%</span></div>`;
+  }
+  sws.innerHTML=html;
+  bar.classList.remove('hidden');
+}
+
+function rebuildPlanNames(){
+  const el=document.getElementById('planNames');
+  if(!el) return;
+  const all=[];
+  for(const seg of planSegments){
+    for(const n of (seg.names||[])){
+      if(all.length===0||all[all.length-1]!==n) all.push(n);
+    }
+  }
+  if(!all.length){el.style.display='none';el.innerHTML='';return;}
+  el.innerHTML=all.map((n,i)=>{
+    const c=getTrailColor(n);
+    return (i?'<span class="tnsep">›</span>':'')+
+      `<span class="tnpill" style="border-color:${c};color:${c}">${n}</span>`;
+  }).join('');
+  el.style.display='flex';
+}
+
+function undoPlanSegment(){
+  if(!planWaypoints.length) return;
+  clearTimeout(planMoveTimer);
+  if(planAbort){planAbort.abort();planAbort=null;}
+  if(planPreviewPoly){planPreviewPoly.remove();planPreviewPoly=null;}
+  if(planSegments.length){
+    const seg=planSegments.pop();
+    planTotalDist-=seg.dist;
+    planWaypoints.pop();
+    const polys=planSegPolylines.pop();
+    if(polys) polys.forEach(p=>p.remove());
+  } else {
+    // Only start marker — remove it
+    if(planStartMarker){planStartMarker.remove();planStartMarker=null;}
+    planWaypoints.pop();
+  }
+  planTotalGain=planSegments.reduce((s,sg)=>{
+    if(!sg.ele) return s;
+    let gain=0,prev=sg.ele[0];
+    for(let i=1;i<sg.ele.length;i++){if(sg.ele[i]>prev) gain+=sg.ele[i]-prev; prev=sg.ele[i];}
+    return s+gain;
+  },0);
+  updatePlanStats();
+  updatePlanButtons();
+  rebuildPlanNames();
+  if(!planSegments.length){
+    if(planChartInst){planChartInst.destroy();planChartInst=null;}
+    const _h=document.getElementById('planChartHint');
+    if(_h){_h.textContent='Click the map to set a start point, then click again to trace a route';_h.style.display='flex';}
+  } else {
+    rebuildPlanChart();
+  }
+}
+
+function clearPlan(){
+  clearTimeout(planMoveTimer);
+  if(planAbort){planAbort.abort();planAbort=null;}
+  planCommitting=false;
+  for(const grp of planSegPolylines) grp.forEach(p=>p.remove());
+  if(planPreviewPoly){planPreviewPoly.remove();planPreviewPoly=null;}
+  if(planStartMarker){planStartMarker.remove();planStartMarker=null;}
+  planWaypoints=[];planSegments=[];planSegPolylines=[];planNameColorMap={};
+  planTotalDist=0;planTotalGain=0;
+  if(planChartInst){planChartInst.destroy();planChartInst=null;}
+  planChartGrades=[];
+  const _h=document.getElementById('planChartHint');
+  if(_h){_h.textContent='Click the map to set a start point, then click again to trace a route';_h.style.display='flex';}
+  document.getElementById('planColorbar').classList.add('hidden');
+  rebuildPlanNames();
+  updatePlanStats();
+  updatePlanButtons();
+}
+
+function exportPlanGpx(){
+  if(!planSegments.length) return;
+  const allCoords=planSegments.flatMap((seg,si)=>si===0?seg.coords:seg.coords.slice(1));
+  const allEle=[];
+  for(let si=0;si<planSegments.length;si++){
+    const seg=planSegments[si];
+    const coords=si===0?seg.coords:seg.coords.slice(1);
+    for(let ci=0;ci<coords.length;ci++){
+      let ele=null;
+      if(seg.ele&&seg.ele.length){
+        const ei=Math.round(ci/(coords.length-1||1)*(seg.ele.length-1));
+        ele=seg.ele[Math.min(ei,seg.ele.length-1)];
+      }
+      allEle.push(ele);
+    }
+  }
+  const trkpts=allCoords.map(([lat,lon],i)=>{
+    const e=allEle[i];
+    return `    <trkpt lat="${lat.toFixed(7)}" lon="${lon.toFixed(7)}">${
+      e!=null?`<ele>${e.toFixed(1)}</ele>`:''
+    }</trkpt>`;
+  }).join('\n');
+  const gpx=`<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="OpenHikeStats" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><time>${new Date().toISOString()}</time></metadata>
+  <trk><name>Planned Route</name><trkseg>
+${trkpts}
+  </trkseg></trk>
+</gpx>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+  a.download='planned-route.gpx';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function updatePlanStats(){
+  const el=document.getElementById('planStats');
+  if(!el) return;
+  if(!planWaypoints.length){el.textContent='';return;}
+  const parts=[D(planTotalDist)+' '+unit.dist.u];
+  if(planTotalGain>0) parts.push(E(planTotalGain)+' '+unit.ele.u+' gained');
+  if(planTotalDist>100){
+    const naismith=(planTotalDist/1000)/5*3600+(planTotalGain/600)*3600;
+    parts.push('Naismith ~'+fmtDurPop(naismith));
+  }
+  el.textContent=parts.join(' · ');
+}
+
+function updatePlanButtons(){
+  const hasWpts=planWaypoints.length>0, hasSegs=planSegments.length>0;
+  document.getElementById('planUndo').disabled=!hasWpts;
+  document.getElementById('planClear').disabled=!hasWpts;
+  document.getElementById('planExport').disabled=!hasSegs;
+}
+
+document.getElementById('planBtn').onclick=openPlanModal;
+document.getElementById('planClose').onclick=closePlanModal;
+planModal.addEventListener('click',e=>{if(e.target===planModal) closePlanModal();});
+planModal.addEventListener('wheel',e=>{if(!e.target.closest('#planMapDiv')) e.preventDefault();},{passive:false});
+document.getElementById('planUndo').onclick=undoPlanSegment;
+document.getElementById('planClear').onclick=clearPlan;
+document.getElementById('planExport').onclick=exportPlanGpx;
+document.addEventListener('keydown',e=>{
+  if(planModal.classList.contains('hidden')) return;
+  if(e.key==='Escape'){closePlanModal();return;}
+  if(e.key==='z'||(e.ctrlKey&&(e.key==='z'||e.key==='Z'))){e.preventDefault();undoPlanSegment();}
+});
 
 /* ============================ Init ============================ */
 syncInputsFromParams();
